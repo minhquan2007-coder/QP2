@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trắc Nghiệm GDQP - An Ninh (Bản Hoàn Chỉnh Nhất)</title>
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to bottom, #d7e1ec, #ffffff);
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    overflow-x: hidden;
+    margin: 0;
+    scroll-behavior: smooth; 
+}
+.overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(5px);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 10000;
+}
+.banner, .result-box, .confirm-box {
+    background: #fff; border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4); text-align: center;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.banner { width: 500px; padding: 30px; }
+.result-box, .confirm-box { width: 450px; padding: 40px 30px; }
+
+#welcome-screen .banner, #name-screen .banner { width: 600px; padding: 50px 30px; background: linear-gradient(135deg, #ffffff, #f0f4f8); border: 4px solid #3498db; }
+#welcome-screen h1, #name-screen h1 { color: #2980b9; font-size: 32px; margin-bottom: 15px; text-transform: uppercase; }
+#welcome-screen p, #name-screen p { color: #34495e; font-size: 18px; margin-bottom: 30px; }
+
+@keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.banner h2 { color: #2c3e50; margin-top: 0; margin-bottom: 20px;}
+.result-box h2 { color: #f39c12; margin-top: 0; font-size: 26px; font-weight: 800;}
+.confirm-box h2 { color: #e74c3c; margin-top: 0; font-size: 24px; font-weight: 800;}
+.setting-row { display: flex; gap: 15px; margin-bottom: 15px; text-align: left; }
+.setting-group { flex: 1; }
+.setting-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #34495e; font-size: 14px;}
+.setting-group select, .setting-group input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #bdc3c7; font-size: 15px; outline: none; box-sizing: border-box;}
+
+#custom-mix-container { display: none; flex-wrap: wrap; gap: 10px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px; }
+.mix-label { display: flex; align-items: center; gap: 5px; font-size: 14px; background: #fff; padding: 5px 10px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer;}
+.mix-label:hover { background: #eef4fb; border-color: #3498db; }
+
+.result-score { font-size: 60px; font-weight: 900; color: #27ae60; margin: 15px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);}
+.result-detail { font-size: 18px; color: #7f8c8d; margin-bottom: 25px; font-weight: 500;}
+.start-btn { background: #27ae60; color: white; border: none; padding: 16px 30px; font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.3s; margin-top: 10px; box-shadow: 0 4px 15px rgba(39,174,96,0.3); }
+.start-btn:hover { background: #219150; transform: translateY(-2px);}
+.close-btn { background: #7f8c8d; color: white; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; transition: 0.3s; margin-top: 10px; display: none; }
+.result-btn-group { display: flex; justify-content: center; gap: 15px; }
+.result-btn { background: #2980b9; color: white; border: none; padding: 12px 20px; font-size: 15px; font-weight: bold; border-radius: 10px; cursor: pointer; transition: all 0.3s; flex: 1; }
+.result-btn:hover { background: #3498db; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);}
+.result-btn.review { background: #95a5a6; }
+.result-btn.danger { background: #e74c3c; }
+
+#main-content, #result-modal, #confirm-modal, #start-banner, #stage-alert-modal, #name-screen { display: none; }
+#main-content { width: 900px; max-width: 100%; z-index: 10; position: relative;}
+.quiz-container { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+h1 { text-align: center; color: #2c3e50; margin-bottom: 10px; }
+.description { text-align: center; color: #7f8c8d; margin-bottom: 20px; font-style: italic; }
+
+/* MENU CHÍNH GÓC TRÊN BÊN TRÁI */
+.top-menu { position: fixed; top: 20px; left: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; align-items: flex-start;}
+.dropbtn { background-color: #4A76A8; color: white; padding: 10px 18px; font-size: 14px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: 0.3s; display: flex; align-items: center; gap: 8px; }
+.dropbtn:hover { background-color: #3b5f88; }
+.setting-btn { background-color: #e6a83a; color: white; border: none; padding: 10px 15px; cursor: pointer; font-size: 14px; font-weight: bold; border-radius: 8px; transition: 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.15); width: 160px; }
+.setting-btn:hover { background-color: #d4982a; }
+.dropdown { position: relative; display: inline-block; }
+.dropdown-content { display: none; position: absolute; left: 0; background-color: #ffffff; min-width: 180px; box-shadow: 0px 8px 25px 0px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; margin-top: 5px; border: 1px solid #ddd; }
+.dropdown-content.show { display: flex; flex-direction: column; animation: slideDownSmooth 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;}
+.tab-btn { background-color: transparent; color: #333; padding: 12px 16px; border: none; width: 100%; text-align: left; cursor: pointer; font-size: 15px; font-weight: bold; transition: 0.2s; border-bottom: 1px solid #f1f1f1; }
+.tab-btn:hover { background-color: #f8f9fa; }
+.tab-btn.active { background-color: #eef4fb; color: #4A76A8; border-left: 4px solid #4A76A8; padding-left: 12px; }
+
+/* BẢNG TIẾN TRÌNH LÀM BÀI BÊN PHẢI (PC) */
+#progress-panel {
+    position: fixed; top: 20px; right: 20px; width: 260px; background: #fff;
+    border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 15px;
+    z-index: 999; max-height: 90vh; overflow-y: auto; transition: transform 0.4s ease;
+}
+
+/* Nút Thu gọn/Hiện bảng tiến trình trên PC */
+#toggle-pc-panel {
+    position: absolute;
+    top: 15px;
+    left: -30px; 
+    width: 30px;
+    height: 40px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 8px 0 0 8px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: -3px 0 10px rgba(0,0,0,0.1);
+    transition: 0.3s;
+    z-index: 1000;
+}
+#toggle-pc-panel:hover { background: #2980b9; }
+
+/* Trạng thái thu gọn: Trượt bảng ra khỏi màn hình */
+#progress-panel.collapsed {
+    transform: translateX(calc(100% + 20px)); 
+}
+
+.progress-header { font-weight: bold; font-size: 16px; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+#close-progress-btn { display: none; background: transparent; border: none; font-size: 18px; color: #e74c3c; cursor: pointer; }
+#progress-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.prog-box { width: 35px; height: 35px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; cursor: pointer; border: 1px solid #ccc; background: #fff; color: #333; transition: 0.2s; }
+.prog-box:hover { transform: scale(1.1); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+.prog-selected { background: #3498db; color: white; border-color: #3498db; }
+.prog-correct { background: #27ae60; color: white; border-color: #27ae60; }
+.prog-wrong { background: #e74c3c; color: white; border-color: #e74c3c; }
+.prog-legend { font-size: 12px; margin-top: 15px; padding-top: 10px; border-top: 1px solid #eee; color: #7f8c8d; }
+#mobile-progress-btn { display: none; }
+
+/* Responsive đẩy Main content sang trái trên PC */
+@media screen and (min-width: 1300px) {
+    #main-content { margin-left: 100px; } 
+}
+@media screen and (min-width: 992px) {
+    .quiz-container { margin-right: 20px;}
+}
+
+.stats { text-align: right; font-weight: bold; color: #e74c3c; margin-bottom: 15px; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 10px;}
+.question-box { 
+    background: #f8f9fa; border-left: 5px solid #3498db; padding: 15px; 
+    margin-bottom: 20px; border-radius: 0 8px 8px 0; 
+    transition: all 0.4s ease; 
+}
+.question-title { font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #2c3e50; }
+.answer-label { display: block; padding: 10px; margin: 5px 0; background: #fff; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; transition: 0.2s; }
+.answer-label:hover { background: #fafafa; }
+.answer-label.selected { background: #d6eaf8; border-color: #3498db; }
+
+.hint-btn { background: #f39c12; color: white; border: none; padding: 8px 15px; font-size: 13px; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 10px; transition: 0.3s; }
+.answer-reveal { display: none; margin-top: 10px; padding: 10px; background: #d4edda; border-left: 4px solid #28a745; color: #155724; font-weight: bold; font-size: 14px; border-radius: 4px; }
+
+/* DARK MODE */
+body.dark-mode { background: #121212; color: #e0e0e0; }
+body.dark-mode .quiz-container, body.dark-mode .banner, body.dark-mode .result-box, body.dark-mode .confirm-box { background: #1e1e1e; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+body.dark-mode h1, body.dark-mode .question-title, body.dark-mode .banner h2 { color: #f1c40f; }
+body.dark-mode .description, body.dark-mode .setting-group label { color: #aaa; }
+body.dark-mode .question-box { background: #2a2a2a; }
+body.dark-mode .answer-label { background: #333; border-color: #555; color: #ddd; }
+body.dark-mode .answer-label:hover { background: #444; }
+body.dark-mode .answer-label.selected { background: #2c3e50; border-color: #3498db; }
+body.dark-mode .setting-group select, body.dark-mode .setting-group input, body.dark-mode #custom-mix-container { background: #333; color: #fff; border-color: #555; }
+body.dark-mode .mix-label { background: #444; border-color: #666; color: #fff;}
+/* Dark Mode Bảng Tiến trình & Nút PC */
+body.dark-mode #progress-panel { background: #1e1e1e; border: 1px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+body.dark-mode .progress-header { color: #f1c40f; border-color: #333; }
+body.dark-mode .prog-box { background: #333; color: #ddd; border-color: #555; }
+body.dark-mode .prog-selected { background: #2980b9; border-color: #2980b9;}
+body.dark-mode .prog-legend { border-color: #333; }
+body.dark-mode #toggle-pc-panel { background: #2980b9; }
+
+/* Box Đúng/Sai */
+.correct { background-color: #d4edda !important; color: #155724; font-weight: bold; border-color: #c3e6cb;}
+.correct::after { content: " ✓ Đúng"; float: right; }
+.wrong { background-color: #f8d7da !important; color: #721c24; text-decoration: line-through; opacity: 0.8; border-color: #f5c6cb;}
+.wrong::after { content: " ✕ Sai"; float: right; text-decoration: none; }
+.wrong-highlight { background-color: #f8d7da !important; border-color: #f5c6cb !important; color: #721c24 !important; font-weight: bold; }
+.box-unanswered { border-left: 5px solid #e74c3c !important; background-color: #fdf5f5 !important; }
+.box-wrong { border-left: 5px solid #e67e22 !important; }
+.box-correct { border-left: 5px solid #27ae60 !important; background-color: #f4fdf8 !important;}
+.disabled { pointer-events: none; }
+.pagination { display: flex; justify-content: center; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+.nav-btn { background: #2c3e50; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; transition: background 0.3s;}
+.nav-btn:hover { background: #34495e; }
+.nav-btn:disabled { background: #ccc; cursor: not-allowed; }
+#submit-test-btn { background: #e74c3c; display: none; }
+#strict-submit-btn { background: #8e44ad; display: inline-block; padding: 15px 40px; font-size: 18px; font-weight: bold; box-shadow: 0 5px 15px rgba(142,68,173,0.4); }
+
+/* Hiệu ứng trượt mềm mại chung */
+@keyframes slideDownSmooth { 0% { opacity: 0; transform: translateY(-25px); } 100% { opacity: 1; transform: translateY(0); } }
+
+/* =========================================================
+   GIAO DIỆN RESPONSIVE CHO ĐIỆN THOẠI
+   ========================================================= */
+#mobile-menu-btn { display: none; }
+
+@media screen and (max-width: 768px) {
+    body { padding: 10px; }
+    .quiz-container { padding: 15px; overflow: hidden; margin-right: 0;}
+    .banner, .result-box, .confirm-box, #welcome-screen .banner, #name-screen .banner, #start-banner .banner { width: 95% !important; padding: 20px 15px !important; box-sizing: border-box !important; }
+    #user-name-input { width: 100% !important; box-sizing: border-box !important; }
+    .setting-row { flex-direction: column; gap: 12px; }
+
+    /* MENU TRÁI DÀNH CHO MOBILE */
+    .top-menu { background: transparent; pointer-events: none; }
+    #mobile-menu-btn { display: flex !important; width: 50px; height: 50px; border-radius: 50%; background: #e74c3c; color: white; font-size: 24px; align-items: center; justify-content: center; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; transition: 0.3s; pointer-events: auto; z-index: 10001; }
+    .top-menu .dropdown, .top-menu .setting-btn { display: none; width: 170px !important; pointer-events: auto; justify-content: center; margin-left: 5px;}
+    .top-menu.open .dropdown, .top-menu.open .setting-btn { display: flex; animation: slideDownSmooth 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .top-menu.open #mobile-menu-btn { background: #c0392b; transform: rotate(45deg); }
+
+    /* TIẾN TRÌNH LÀM BÀI DÀNH CHO MOBILE (Trượt từ phải sang) */
+    #mobile-progress-btn { display: flex; position: fixed; top: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: #27ae60; color: white; font-size: 20px; align-items: center; justify-content: center; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.4); cursor: pointer; z-index: 10000; transition: 0.3s;}
+    #progress-panel { transform: translateX(120%); right: 0; top: 0; height: 100vh; max-height: 100vh; border-radius: 0; width: 260px; z-index: 10002; box-shadow: -5px 0 20px rgba(0,0,0,0.2);}
+    #progress-panel.open { transform: translateX(0); }
+    #close-progress-btn { display: block; }
+    #toggle-pc-panel { display: none !important; } 
+}
+
+/* =========================================================
+   HIỆU ỨNG NHẤP NHÁY (PHÁT SÁNG) CHO 2 ICON Ở GÓC
+   ========================================================= */
+@keyframes iconBlink {
+    0% {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        filter: brightness(1);
+    }
+    50% {
+        box-shadow: 0 0 20px 8px rgba(241, 196, 15, 0.8);
+        filter: brightness(1.3);
+    }
+    100% {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        filter: brightness(1);
+    }
+}
+
+#mobile-menu-btn, #mobile-progress-btn, #toggle-pc-panel {
+    animation: iconBlink 1.5s infinite ease-in-out !important;
+}
+
+.top-menu.open #mobile-menu-btn {
+    animation: none !important;
+}
+</style>
+</head>
+<body>
+
+<div class="overlay" id="welcome-screen" style="display: flex;">
+    <div class="banner">
+        <h1>CHÀO MỪNG BẠN ĐẾN VỚI HỆ THỐNG<br>LUYỆN TẬP TRẮC NGHIỆM</h1>
+        <p>Bản Nâng cấp: Tắt/Bật Thanh Tiến Trình & Làm Lại Câu Sai</p>
+        <button class="start-btn" onclick="openNameForm()">BẮT ĐẦU NGAY</button>
+    </div>
+</div>
+
+<div class="overlay" id="name-screen">
+    <div class="banner">
+        <h2>BẠN TÊN LÀ GÌ?</h2>
+        <p>Vui lòng nhập họ tên để hệ thống lưu kết quả nhé!</p>
+        <div class="setting-row">
+            <input type="text" id="user-name-input" placeholder="Ví dụ: Nguyễn Văn A..." style="width: 100%; padding: 15px; font-size: 16px; border-radius: 8px; border: 2px solid #3498db; text-align: center; font-weight: bold;">
+        </div>
+        <button class="start-btn" onclick="submitName()">TIẾP TỤC</button>
+    </div>
+</div>
+
+<div class="overlay" id="start-banner">
+    <div class="banner" style="width: 650px;">
+        <h2>⚙️Thiết Lập Đề Thi</h2>
+        <div class="setting-row">
+            <div class="setting-group" style="flex: 1.5;">
+                <label>Học phần / Nguồn câu hỏi:</label>
+                <select id="setting-module" onchange="toggleModuleSelect()">
+                    <option value="qp2">Bộ Câu Hỏi GDQP (Gốc)</option>
+                    <option value="qp2" selected>Học phần QP2 (137 Câu)</option>
+                    <option value="cd4">CĐ 4: Chiến tranh nhân dân</option>
+                    <option value="cd5">CĐ 5: Xây dựng LLVT nhân dân</option>
+                    <option value="cd6">CĐ 6: Kết hợp KT-XH với QP-AN</option>
+                    <option value="cd7">CĐ 7: Nghệ thuật quân sự VN</option>
+                    <option value="cd8">CĐ 8: Bảo vệ chủ quyền biển đảo</option>
+                    <option value="cd9">CĐ 9: Lực lượng DQTV, DBĐV</option>
+                    <option value="all">🔥 Trộn TẤT CẢ Chuyên đề</option>
+                    <option value="custom_mix">🛠 TÙY CHỌN TRỘN NHIỀU CHUYÊN ĐỀ</option>
+                </select>
+                
+                <div id="custom-mix-container">
+                    <label class="mix-label"><input type="checkbox" value="qp1" checked> Đề Gốc</label>
+                    <label class="mix-label"><input type="checkbox" value="qp2" checked> Đề QP2</label>
+                    <label class="mix-label"><input type="checkbox" value="cd4"> CĐ 4</label>
+                    <label class="mix-label"><input type="checkbox" value="cd5"> CĐ 5</label>
+                    <label class="mix-label"><input type="checkbox" value="cd6"> CĐ 6</label>
+                    <label class="mix-label"><input type="checkbox" value="cd7"> CĐ 7</label>
+                    <label class="mix-label"><input type="checkbox" value="cd8"> CĐ 8</label>
+                    <label class="mix-label"><input type="checkbox" value="cd9"> CĐ 9</label>
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <label>Phạm vi / Số lượng câu:</label>
+                <select id="setting-limit" onchange="toggleCustomRange()">
+                    <option value="all" selected>Toàn bộ câu (Mặc định)</option>
+                    <option value="10">10 câu</option>
+                    <option value="20">20 câu</option>
+                    <option value="50">50 câu</option>
+                    <option value="custom">Tùy chọn khoảng</option>
+                </select>
+                <div id="custom-range-inputs" style="display: none; margin-top: 10px; gap: 10px; justify-content: space-between;">
+                    <input type="number" id="custom-start" placeholder="Từ câu..." min="1" style="width: 48%;">
+                    <input type="number" id="custom-end" placeholder="Đến câu..." min="1" style="width: 48%;">
+                </div>
+            </div>
+        </div>
+        <div class="setting-row">
+            <div class="setting-group">
+                <label>Trộn thứ tự câu hỏi?</label>
+                <select id="setting-shuffle">
+                    <option value="yes">Có (Ngẫu nhiên)</option>
+                    <option value="no" selected>Không (Theo thứ tự gốc)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label>Chế độ làm bài:</label>
+                <select id="setting-answer">
+                    <option value="strict_20" selected>THI VƯỢT ẢI (Bắt buộc sửa đúng hết)</option>
+                    <option value="yes">Ôn tập (Hiện ngay đáp án)</option>
+                    <option value="no">Thi thử (Làm xong 1 lượt nộp chấm)</option>
+                </select>
+            </div>
+        </div>
+        <button class="start-btn" id="start-btn-action" onclick="startApp()">TẠO ĐỀ & BẮT ĐẦU LÀM</button>
+        <button class="close-btn" id="close-banner-btn" onclick="closeSettings()">ĐÓNG (Không lưu)</button>
+    </div>
+</div>
+
+<div class="overlay" id="confirm-modal">
+    <div class="confirm-box">
+        <h2>⚠️ XÁC NHẬN NỘP BÀI</h2>
+        <div class="result-detail" style="color: #34495e;">
+            Bạn có chắc chắn muốn nộp bài để chấm điểm không?<br>
+            <span style="font-size: 15px; font-style: italic; color: #e74c3c;">(Sau khi nộp, hệ thống sẽ khóa đề)</span>
+        </div>
+        <div class="result-btn-group">
+            <button class="result-btn review" onclick="closeConfirmModal()">HỦY BỎ</button>
+            <button class="result-btn danger" onclick="processSubmit()">ĐỒNG Ý NỘP</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="stage-alert-modal">
+    <div class="confirm-box">
+        <h2 id="stage-alert-title">Thông báo</h2>
+        <div class="result-detail" id="stage-alert-msg" style="color: #34495e; white-space: pre-line;"></div>
+        <div class="result-btn-group">
+            <button class="result-btn" id="stage-alert-btn" onclick="closeStageAlert()">ĐÃ HIỂU</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay" id="result-modal">
+    <div class="result-box">
+        <h2>🎉 HOÀN THÀNH BÀI THI! 🎉</h2>
+        <div class="result-score" id="score-text">10.0</div>
+        <div class="result-detail" id="detail-text">Trả lời đúng: 0 / 0 câu</div>
+        <div class="result-btn-group">
+            <button class="result-btn review" onclick="closeResult()">XEM ĐÁP ÁN</button>
+            <button class="result-btn danger" id="retry-wrong-btn" onclick="retryWrongQuestions()" style="display:none;">LÀM LẠI CÂU SAI</button>
+            <button class="result-btn" onclick="openSettingsFromResult()">LÀM ĐỀ MỚI</button>
+        </div>
+    </div>
+</div>
+
+<!-- Nút bật tắt Bảng tiến trình trên Mobile -->
+<button id="mobile-progress-btn" onclick="toggleProgressPanel()">📋</button>
+
+<div id="main-content">
+    <!-- MENU NỔI BÊN TRÁI -->
+    <div class="top-menu" id="top-menu-container">
+        <button id="mobile-menu-btn" onclick="toggleMobileMenu()">🛠</button>
+
+        <div class="dropdown">
+            <button class="dropbtn" onclick="toggleDropdown(event)">📚 Chọn Nhanh Đề ▼</button>
+            <div class="dropdown-content" id="myDropdown">
+                <button class="tab-btn" id="btn-qp1" onclick="switchTab('qp1')">Đề 104 Câu Gốc</button>
+                <button class="tab-btn active" id="btn-qp2" onclick="switchTab('qp2')">Học phần QP2 (137 câu)</button>
+                <button class="tab-btn" id="btn-cd4" onclick="switchTab('cd4')">CĐ 4: Chiến tranh ND</button>
+                <button class="tab-btn" id="btn-cd5" onclick="switchTab('cd5')">CĐ 5: Xây dựng LLVT</button>
+                <button class="tab-btn" id="btn-cd6" onclick="switchTab('cd6')">CĐ 6: Kết hợp KT-QP</button>
+                <button class="tab-btn" id="btn-cd7" onclick="switchTab('cd7')">CĐ 7: Nghệ thuật QS</button>
+                <button class="tab-btn" id="btn-cd8" onclick="switchTab('cd8')">CĐ 8: Bảo vệ CQ</button>
+                <button class="tab-btn" id="btn-cd9" onclick="switchTab('cd9')">CĐ 9: DQTV, DBĐV</button>
+                <button class="tab-btn" id="btn-all" onclick="switchTab('all')">Trộn Tất Cả</button>
+            </div>
+        </div>
+        <button class="setting-btn" onclick="openSettings()">⚙️ Cài đặt Đề</button>
+        <button class="setting-btn" id="toggle-progress-master-btn" onclick="toggleMasterProgressDisplay()" style="background-color: #e6a83a; color: white;">📊 Tắt Tiến Trình</button>
+        <button class="setting-btn" id="dark-mode-btn" onclick="toggleDarkMode(event)" style="background-color: #2c3e50; color: white;">🌙 Nền tối</button>
+    </div>
+
+    <!-- BẢNG TIẾN TRÌNH LÀM BÀI BÊN PHẢI -->
+    <div id="progress-panel">
+        <button id="toggle-pc-panel" onclick="togglePcPanel()" title="Thu gọn/Hiện bảng tiến trình">▶</button>
+        
+        <div class="progress-header">
+            Tiến độ làm bài
+            <button id="close-progress-btn" onclick="toggleProgressPanel()">✖</button>
+        </div>
+        <div id="progress-grid">
+            <!-- Render tự động các ô số ở đây -->
+        </div>
+        <div class="prog-legend">
+            <b>Chú thích:</b><br>
+            ⬜ Chưa làm <br>
+            🟦 Đã chọn (Thi thử) <br>
+            🟩 Trả lời đúng <br>
+            🟥 Trả lời sai
+        </div>
+    </div>
+
+    <div class="quiz-container">
+        <h1>Hệ Thống Luyện Tập Trắc Nghiệm GDQP</h1>
+        <p class="description" id="mode-desc">Thiết lập cấu hình đề thi theo ý muốn của bạn!</p>
+        
+        <div class="stats" id="global-stats">Đang tải dữ liệu...</div>
+        <div id="quiz-area"></div>
+        
+        <div class="pagination" id="normal-pagination">
+            <button class="nav-btn" id="prev-btn" onclick="changePage(-1)">❮ Trước</button>
+            <span id="page-info" style="align-self: center; font-weight: bold; padding: 0 15px;">Trang 1</span>
+            <button class="nav-btn" id="next-btn" onclick="changePage(1)">Sau ❯</button>
+            <button class="nav-btn" id="submit-test-btn" onclick="openConfirmModal()">NỘP BÀI TỔNG</button>
+        </div>
+
+        <div class="pagination" id="strict-pagination" style="display: none;">
+            <button class="nav-btn" id="strict-submit-btn" onclick="checkStrictSubmit()">NỘP BÀI KIỂM TRA ẢI</button>
+        </div>
+        
+        <div style="text-align: center; margin-top: 15px;" id="page-jump-container">
+            Đến nhanh trang: <select id="page-select" onchange="goToPageSelect(this.value)"></select>
+        </div>
+    </div>
+</div>
+
+<script>
+// =====================================================================
+// DỮ LIỆU CÂU HỎI (BẠN HÃY DÁN LẠI BỘ CÂU HỎI VÀO PHẦN QP2 Ở DƯỚI NHÉ)
+// =====================================================================
+const quizData = {
+    qp1: [], 
+    cd4: [], 
+    cd5: [], 
+    cd6: [], 
+    cd7: [], 
+    cd8: [], 
+    cd9: [],
+    qp2: [
+        { id: 1, q: "Anh (chị) cho biết hiện nay chủ nghĩa đế quốc và các thế lực thù địch, âm mưu chống phá cách mạng nước ta bằng chiến lược gì?", a: {"A": "Chiến lược \"trả đũa ồ ạt\"", "B": "Chiến lược \"phản ứng nhanh\"", "C": "Chiến lược \"Diễn biến hòa bình\", bạo loạn lật đổ", "D": "Chiến lược \"vượt trên ngăn chặn\""}, true: "C" },
+        { id: 2, q: "Anh (chị) cho biết chiến lược \"Diễn biến hòa bình\" do lực lượng nào tiến hành?", a: {"A": "Chủ nghĩa đế quốc và các thế lực phản động tiến hành", "B": "Chủ nghĩa đế quốc đứng đầu là Mỹ và các thế lực phản động tiến hành", "C": "Chủ nghĩa đế quốc và các phần tử cơ hội tiến hành", "D": "Chủ nghĩa đế quốc và các phần tử quá khích tiến hành"}, true: "A" },
+        { id: 3, q: "Anh (chị) cho biết đối tượng chiến lược \"Diễn biến hòa bình\" là những nước nào?", a: {"A": "Các nước xã hội chủ nghĩa", "B": "Các nước tiến bộ", "C": "Các nước xã hội chủ nghĩa và các nước tiến bộ", "D": "Các nước đối lập về chính trị đối với CNĐQ"}, true: "C" },
+        { id: 4, q: "Anh (chị) cho biết biện pháp chủ yếu của chiến lược \"Diễn biến hòa bình\" là gì?", a: {"A": "Không sử dụng chiến tranh.", "B": "Răn đe quân sự, kết hợp với lật đổ", "C": "Sử dụng các thủ đoạn chống phá về: Kinh tế, chính trị, tư tưởng, văn hoá, xã hội, đối ngoại, an ninh.", "D": "Phi quân sự"}, true: "D" },
+        { id: 5, q: "Anh (chị) cho biết nội dung chủ yếu của chiến lược \"Diễn biến hòa bình\" chống phá XHCN là gì?", a: {"A": "Sử dụng mọi thủ đoạn phi quân sự.", "B": "Kích động các mâu thuẫn trong xã hội, tạo ra các lực lượng chính trị đối lập.", "C": "Coi trọng khích lệ lối sống tư sản và từng bước làm phai nhạt mục tiêu, lí tưởng xã hội chủ nghĩa ở một bộ phận giới trẻ.", "D": "Tất cả các đáp án trên"}, true: "D" },
+        { id: 6, q: "Anh (chị) cho biết sự hình thành và phát triển của chiến lược \"diễn biến hòa bình\" qua mấy giai đoạn?", a: {"A": "2", "B": "3", "C": "4", "D": "5"}, true: "A" },
+        { id: 7, q: "Anh (chị) cho biết mốc thời gian ra đời của chiến lược \"diễn biến hòa bình\"?", a: {"A": "Tháng 10/1946", "B": "Tháng 12/1946", "C": "Tháng 10/1947", "D": "Tháng 12/1947"}, true: "B" },
+        { id: 8, q: "Anh (chị) cho biết ai là người đầu tiên đề xuất chiến lược \"diễn biến hòa bình\"?", a: {"A": "Ken nan", "B": "Hary Truman", "C": "Aixenhao", "D": "Ních Xơn"}, true: "A" },
+        { id: 9, q: "Anh (chị) cho biết mốc thời gian nào Mĩ tuyên bố bình thường hoá quan hệ Việt Nam để sử dụng \"diễn biến hòa bình\" chống phá cách mạng Việt Nam?", a: {"A": "Ngày 11/6/1995", "B": "Ngày 11/7/1995", "C": "Ngày 11/8/1995", "D": "Ngày 11/9/1995"}, true: "B" },
+        { id: 10, q: "Anh (chị) cho biết hiện nay CNĐQ xác định nước nào là trọng điểm chống phá của chiến lược \"diễn biến hòa bình\"?", a: {"A": "Trung Quốc", "B": "Triều Tiên", "C": "Cu ba", "D": "Việt Nam"}, true: "D" },
+        { id: 11, q: "Anh (chị) cho biết hiện nay CNĐQ xác định chống phá trên lĩnh vực nào là ngòi nổ của chiến lược \"diễn biến hòa bình\" chống phá cách mạng Việt Nam?", a: {"A": "Chính trị", "B": "Kinh tế", "C": "Dân tộc, tôn giáo", "D": "Ngoại giao"}, true: "C" },
+        { id: 12, q: "Anh (chị) cho biết mục tiêu của các thế lực thù địch thực hiện \"Diễn biến hòa bình\", bạo loạn lật đổ ở Việt Nam là gì?", a: {"A": "Chỉ phối về kinh tế và buộc ta lệ thuộc vào chúng.", "B": "Thực hiện âm mưu xóa bỏ vai trò lãnh đạo của Đảng, xóa bỏ chế độ XHCN, đưa nước ta theo con đường đạo của chủ nghĩa tư bản.", "C": "Lôi kéo Việt Nam đi theo chúng và chuyển hóa theo quỹ đạo của chủ nghĩa tư bản.", "D": "Thực hiện âm mưu xóa bỏ vai trò lãnh đạo của Đảng, xóa bỏ chế độ XHCN, đưa nước ta theo con đường CNTB và lệ thuộc vào CNĐQ."}, true: "D" },
+        { id: 13, q: "Anh (chị) cho biết âm mưu \"Diễn biến hòa bình\" xác định tiến công trên lĩnh vực nào là \"mũi nhọn\", là \"trọng yếu\", là \"nội dung cốt lõi\"?", a: {"A": "Kinh tế", "B": "Chính trị", "C": "Tư tưởng - văn hóa", "D": "Quốc phòng - An ninh"}, true: "C" },
+        { id: 14, q: "Anh (chị) cho biết một trong những nội dung kẻ thù lợi dụng để chống phá cách mạng Việt Nam về vấn đề dân tộc là gì?", a: {"A": "Lợi dụng các mâu thuẫn nội bộ trong đồng bào dân tộc để kích động bạo loạn.", "B": "Lợi dụng những khó khăn ở vùng đồng bào dân tộc ít người và những tồn tại do lịch sử để lại.", "C": "Lợi dụng các mâu thuẫn giữa các dân tộc do nhiều nguyên nhân gây ra.", "D": "Lợi dụng các hủ tục lạc hậu của đồng bào dân tộc để kích động."}, true: "B" },
+        { id: 15, q: "Anh (chị) cho biết nội dung nào sau đây nằm trong âm mưu \"Diễn biến hòa bình\" trên lĩnh vực tư tưởng - văn hóa chống phá Việt Nam của các thế lực thù địch?", a: {"A": "Xóa bỏ chủ nghĩa Mác- Lênin, tư tưởng Hồ Chí Minh, phá vỡ nền tảng tư tưởng của Đảng Cộng sản Việt Nam.", "B": "Truyền bá tư tưởng tư sản vào các tầng lớp nhân dân.", "C": "Thực hiện \"xâm nhập\" về văn hóa, làm mất bản sắc dân tộc của nền văn hóa Việt Nam.", "D": "Tất cả các nội dung trên."}, true: "D" },
+        { id: 16, q: "Anh (chị) cho biết quan điểm chỉ đạo phòng chống chiến lược \"Diễn biến hòa bình\" của Đảng và nhà nước ta gồm mấy nội dung?", a: {"A": "3", "B": "4", "C": "5", "D": "6"}, true: "D" },
+        { id: 17, q: "Anh (chị) cho biết phương châm tiến hành xử lí khi có bạo loạn diễn ra là gì?", a: {"A": "Linh hoạt, khôn khéo, đúng đối tượng...", "B": "Kiên quyết, mềm dẻo, đúng đối tượng, không để lan rộng...", "C": "Nhanh gọn, kiên quyết, triệt để, đúng đối tượng...", "D": "Chủ động, kiên quyết, khôn khéo xử lý tình huống và giải quyết hậu quả khi có các vụ gây rối không để phát triển thành bạo loạn."}, true: "D" },
+        { id: 18, q: "Anh (chị) cho biết các hình thức bạo loạn lật đổ gồm những hình thức nào?", a: {"A": "Bạo loạn chính trị; bạo loạn quân sự.", "B": "Bạo loạn chính trị; bạo loạn vũ trang; bạo loạn quân sự.", "C": "Bạo loạn chính trị; bạo loạn vũ trang; Kết hợp bạo loạn chính trị với bạo loạn vũ trang.", "D": "Bạo loạn chính trị; bạo loạn vũ trang."}, true: "C" },
+        { id: 19, q: "Anh (chị) chọn nội dung sai trong những giải pháp phòng chống chiến lược \"Diễn biến hòa bình\", bạo loạn lật đổ dưới đây?", a: {"A": "Nâng cao nhận thức về âm mưu thủ đoạn của các thế lực thù địch...", "B": "Xây dựng phương án không để các thế lực thù địch chủ động chống phá.", "C": "Xây dựng ý thức bảo vệ Tổ quốc cho toàn dân.", "D": "Chăm lo xây dựng lực lượng vũ trang địa phương vững mạnh."}, true: "B" },
+        { id: 20, q: "Anh (chị) cho biết nguyên tắc xử lí khi có bạo loạn diễn ra là gì?", a: {"A": "Nhanh gọn, kiên quyết, linh hoạt, đúng đối tượng. Sử dụng lực lượng và phương pháp đấu tranh phù hợp không để lan rộng, kéo dài.", "B": "Nhanh gọn, kiên quyết, triệt để, đúng đối tượng, không để lan rộng, kéo dài.", "C": "Linh hoạt, khôn khéo, đúng đối tượng. Sử dụng lực lượng...", "D": "Kiên quyết, mềm dẻo, đúng đối tượng, không để lan rộng, kéo dài."}, true: "A" },
+        { id: 21, q: "Anh (chị) cho biết \"Tự diễn biến\", \"tự chuyển hóa\" về tư tưởng chính trị là gì?", a: {"A": "Là những thay đổi theo hướng phủ định chế độ xã hội chủ nghĩa.", "B": "Là sự giảm dần niềm tin vào chân lý, tính đúng đắn của chủ nghĩa Mác - Lênin.", "C": "Là hiện tượng sùng bái tư tưởng đạo đức, lối sống tư sản.", "D": "Đáp án A và B."}, true: "A" },
+        { id: 22, q: "Anh (chị) cho biết nội dung nào sau đây nằm trong âm mưu \"Diễn biến hòa bình\" trên lĩnh vực tư tưởng - văn hóa chống phá Việt Nam của các thế lực thù địch?", a: {"A": "Xóa bỏ chủ nghĩa Mác- Lênin, tư tưởng Hồ Chí Minh, phá vỡ nền tảng tư tưởng...", "B": "Truyền bá tư tưởng tư sản vào các tầng lớp nhân dân.", "C": "Thực hiện \"xâm nhập\" về văn hóa, làm mất bản sắc dân tộc...", "D": "Tất cả các nội dung trên."}, true: "D" },
+        { id: 23, q: "Anh (chị) cho biết trên địa bàn Tây Nam Bộ, các thế lực phản động muốn dựng nên Nhà nước gì?", a: {"A": "Nhà nước Chăm Pa.", "B": "Nhà nước H. Mông.", "C": "Nhà nước Cộng hòa Đêgar.", "D": "Nhà nước Khơmer Crôm."}, true: "D" },
+        { id: 24, q: "Anh (chị) cho biết hình thức nào là hình thức đấu tranh phòng chống bạo loạn lật đổ?", a: {"A": "Đấu tranh chính trị; Đấu tranh quân sự; Đấu tranh kinh tế; Đấu tranh ngoại giao.", "B": "Đấu tranh chính trị; Đấu tranh vũ trang; Đấu tranh kinh tế; Đấu tranh ngoại giao.", "C": "Đấu tranh chính trị; Đấu tranh vũ trang; Đấu tranh kinh tế - xã hội; Đấu tranh ngoại giao.", "D": "Đấu tranh chính trị - tư tưởng; Đấu tranh quân sự; Đấu tranh kinh tế..."}, true: "B" },
+        { id: 25, q: "Anh (chị) cho biết quan điểm tư tưởng chỉ đạo phòng chống bạo loạn lật đổ?", a: {"A": "Phát huy sức mạnh tổng hợp của toàn dân...", "B": "Phát huy sức mạnh tổng hợp của toàn dân, của cả hệ thống chính trị...", "C": "Khi xảy ra bạo loạn lật đổ, phải sử dụng các biện pháp đấu tranh tổng hợp, giải quyết nhanh gọn, kiên quyết, linh hoạt, đúng đối tượng, không để kéo dài, lan rộng.", "D": "Tham gia củng cố cơ sở chính trị, vận động quần chúng."}, true: "C" },
+        { id: 26, q: "Anh (chị) cho biết quan điểm tư tưởng chỉ đạo phòng chống bạo loạn lật đổ?", a: {"A": "Xây dựng quân đội nhân dân và công an nhân dân cách mạng...", "B": "Chủ động phòng ngừa không để xảy ra bạo loạn là cách tốt nhất.", "C": "Đổi mới tư duy đối ngoại để theo kịp sự phát triển mau lẹ...", "D": "Cần có sự phối hợp chặt chẽ giữa các lực lượng..."}, true: "B" },
+        { id: 27, q: "Anh (chị) tìm cụm từ còn thiếu: \"Dân tộc là ........ hình thành trong lịch sử, tạo lập một quốc gia, trên cơ sở cộng đồng bền vững về: Lãnh thổ quốc gia, kinh tế, ngôn ngữ, truyền thống...\"?", a: {"A": "Tộc người ổn định.", "B": "Tập thể cộng đồng người ổn định.", "C": "Tên gọi của mỗi quốc gia.", "D": "Cộng đồng người ổn định."}, true: "D" },
+        { id: 28, q: "Anh (chị) tìm cụm từ còn thiếu: \"Dân tộc là cộng đồng người ổn định, hình thành trong lịch sử, tạo lập một quốc gia, trên cơ sở cộng đồng bền vững về:.... truyền thống, văn hóa, đặc điểm tâm lý...\"?", a: {"A": "Lãnh thổ quốc gia, kinh tế, ngôn ngữ.", "B": "Tập thể cộng đồng người ổn định.", "C": "Tên gọi của mỗi quốc gia.", "D": "Cộng đồng người ổn định."}, true: "A" },
+        { id: 29, q: "Anh (chị) cho biết nội dung nào dưới đây nói về quyền bình đẳng giữa các dân tộc về văn hóa?", a: {"A": "Các dân tộc có nghĩa vụ phải sử dụng tiếng nói, chữ viết của mình.", "B": "Các dân tộc có quyền dùng tiếng nói, chữ viết của mình.", "C": "Các dân tộc có quyền duy trì mọi phong tục, tập quán của dân tộc mình.", "D": "Các dân tộc không được duy trì những lễ hội riêng của dân tộc mình."}, true: "B" },
+        { id: 30, q: "Anh (chị) cho biết quan điểm chủ nghĩa Mác Lênin về vấn đề dân tộc?", a: {"A": "Vấn đề dân tộc là vấn đề chiến lược của cách mạng XHCN.", "B": "Vấn đề dân tộc phải gắn chặt với vấn đề giai cấp.", "C": "Giải quyết vấn đề dân tộc vừa là mục tiêu, vừa là động lực của cách mạng xã hội chủ nghĩa.", "D": "Tất cả các đáp án trên"}, true: "D" },
+        { id: 31, q: "Anh (chị) tìm cụm từ còn thiếu: \"Giải quyết vấn đề dân tộc thực chất là xác lập.... giữa các dân tộc trong một quốc gia, giữa các quốc gia dân tộc trên các lĩnh vực kinh tế, chính trị, văn hóa...\"?", a: {"A": "Quan hệ công bằng, bình đẳng.", "B": "Quan hệ bình đẳng, dân chủ, tôn trọng.", "C": "Quan hệ bình đẳng, đoàn kết, tương trợ.", "D": "Quan hệ công bằng, bình đẳng, dân chủ, đoàn kết."}, true: "C" },
+        { id: 32, q: "Anh (chị) cho biết mục tiêu xây dựng mối quan hệ tốt đẹp giữa các dân tộc theo tư tưởng của Chủ tịch Hồ Chí Minh là?", a: {"A": "Bình đẳng, đoàn kết, tôn trọng và giúp đỡ nhau cùng phát triển đi lên con đường ấm no, hạnh phúc.", "B": "Xây dựng tinh thần đoàn kết, tôn trọng và giúp đỡ nhau cùng phát triển...", "C": "Tương trợ, đoàn kết giúp đỡ nhau cùng phát triển...", "D": "Bình đẳng, đoàn kết, tôn trọng và giúp đỡ nhau..."}, true: "A" },
+        { id: 33, q: "Anh (chị) cho biết nội dung nào thể hiện nét đặc trưng của dân tộc Việt Nam?", a: {"A": "Các dân tộc sinh sống trên một quốc gia thống nhất.", "B": "Các dân tộc ở Việt Nam có chung nền văn hóa.", "C": "Các dân tộc có quy mô dân số và trình độ phát triển không đều.", "D": "Các dân tộc bố trí tập trung cư trú và trình độ phát triển không đều."}, true: "C" },
+        { id: 34, q: "Anh (chị) tìm cụm từ còn thiếu: \"Thực hiện chính sách ............ giữa các dân tộc, tạo mọi điều kiện để các dân tộc phát triển đi lên con đường văn minh, tiến bộ...\"", a: {"A": "Dân chủ, bình đẳng, đoàn kết, tương trợ.", "B": "Bình đẳng, đoàn kết, tương trợ.", "C": "Bình đẳng, đoàn kết, giúp đỡ, tương trợ.", "D": "Tất cả các đáp án trên đều đúng."}, true: "B" },
+        { id: 36, q: "Anh (chị) cho biết các tính chất đặc trưng của tôn giáo là gì?", a: {"A": "Tính chính trị của tôn giáo.", "B": "Tính lịch sử, tính quần chúng, tính chính trị của tôn giáo.", "C": "Tính giai cấp, tính quần chúng, tính chính trị của tôn giáo.", "D": "Tính lịch sử, tính quần chúng."}, true: "B" },
+        { id: 37, q: "Anh (chị) cho biết nội dung cốt lõi của công tác tôn giáo ở Việt Nam là gì?", a: {"A": "Là công tác vận động quần chúng sống \"tốt đời, đẹp đạo\", góp phần xây dựng và bảo vệ Tổ quốc Việt Nam xã hội chủ nghĩa.", "B": "Vận động quần chúng sống \"phúc âm trong lòng dân tộc\"...", "C": "Vận động quần chúng sống \"kính chúa yêu nước\"...", "D": "Vận động quần chúng sống \"từ bi, bác ái\"..."}, true: "A" },
+        { id: 38, q: "Anh (chị) cho biết thủ đoạn lợi dụng vấn đề dân tộc, tôn giáo chống phá cách mạng Việt Nam của các thế lực thù địch là gì?", a: {"A": "Kích động, lôi kéo, chia rẽ.", "B": "Rất thâm độc, tinh vi, xảo trá làm cho người ta tin và làm theo.", "C": "Trực diện, tinh vi, độc ác.", "D": "Dùng chính trị kết hợp với bạo lực."}, true: "A" },
+        { id: 39, q: "Anh (chị) cho biết nội dung nào là quan điểm của Đảng, Nhà nước ta về vấn đề tôn giáo hiện nay là gì?", a: {"A": "Đồng bào tôn giáo là một bộ phận quan trọng của khối đại đoàn kết toàn dân tộc.", "B": "Tôn giáo có những giá trị văn hóa, đạo đức tích cực phù hợp với xã hội mới.", "C": "Tôn giáo còn tồn tại lâu dài, còn là nhu cầu tinh thần của một bộ phận nhân dân.", "D": "Tất cả đều đúng."}, true: "D" },
+        { id: 40, q: "Anh (chị) cho biết có mấy giải pháp cụ thể trong đấu tranh phòng, chống sự lợi dụng vấn đề dân tộc, tôn giáo chống phá cách mạng Việt Nam của các thế lực thù địch?", a: {"A": "4", "B": "5", "C": "6", "D": "7"}, true: "B" },
+        { id: 41, q: "Anh (chị) cho biết ở Việt Nam chúng ta hiện nay có mấy tôn giáo lớn hiện nay?", a: {"A": "5 (Phật giáo; Tin Lành; Hồi giáo; Cao Đài; Hòa Hảo).", "B": "6 (Phật giáo; Công giáo; Tin Lành; Hồi giáo; Cao Đài; Hòa Hảo).", "C": "7 (Phật giáo, Công giáo, Tin Lành, Hồi giáo, Cao Đài, Hòa Hảo, Thiên chúa).", "D": "8 (Phật giáo, Công giáo, Tin Lành, Hồi giáo, Cao Đài, Hòa Hảo, Thiên chúa, Minh sư đạo, Minh lý đạo)."}, true: "B" },
+        { id: 42, q: "Anh (chị) tìm cụm từ còn thiếu: \"Các tôn giáo được quyền hoạt động trong khuôn khổ của pháp luật và ...\"", a: {"A": "Tôn trọng trong xã hội.", "B": "Bình đẳng trước tôn giáo.", "C": "Đoàn kết giữa tôn giáo.", "D": "Bình đẳng trước pháp luật."}, true: "D" },
+        { id: 43, q: "Anh (chị) cho biết nội dung nào sau đây đúng với giải pháp nâng cao nhận thức xây dựng khối đại đoàn kết dân tộc cho đồng bào dân tộc, tôn giáo?", a: {"A": "Chăm lo nâng cao đời sống vật chất tinh thần của đồng bào các dân tộc, các tôn giáo.", "B": "Thực hiện tốt các chính sách về dân tộc, tôn giáo và bảo đảm tự do tín ngưỡng.", "C": "Đồng bào tôn giáo là một bộ phận quan trọng trong khối đại đoàn kết toàn dân tộc.", "D": "Tất cả các đều đúng."}, true: "A" },
+        { id: 44, q: "Anh (chị) cho biết nội dung nào sau đây đúng với quan điểm của Đảng ta về tôn giáo ở nước ta?", a: {"A": "Tôn giáo phản ánh khát vọng về một xã hội tự do, bình đẳng và bác ái của quần chúng, trở thành nhu cầu tinh thần của một bộ phận đông đảo quần chúng nhân dân.", "B": "Tình hình tôn giáo còn có những diễn biến phức tạp...", "C": "Phân biệt rõ mối quan hệ giữa hai mặt chính trị và tư tưởng...", "D": "Công tác tôn giáo vừa quan tâm giải quyết nhu cầu hợp lý tín ngưỡng..."}, true: "A" },
+        { id: 45, q: "Anh (chị) cho biết nội dung nào sau đây đúng với quan điểm về dân tộc của Đảng ta hiện nay?", a: {"A": "Thực hiện chính sách ưu tiên trong đào tạo, bồi dưỡng cán bộ, trí thức...", "B": "Phải quan tâm, chăm lo đào tạo cán bộ cho các dân tộc thiểu số, giữ gìn đội ngũ cán bộ làm công tác Đảng, quản lý nhà nước ở cơ sở.", "C": "Nâng cao đời sống đồng bào các dân tộc thiểu số, giữ gìn và phát huy bản sắc...", "D": "Có chính sách đầu tư thu hút và phát triển đội ngũ cán bộ cho vùng dân tộc thiểu số..."}, true: "B" },
+        { id: 46, q: "Anh (chị) cho biết nội dung nào sau đây đúng với chính sách văn hóa của Đảng và Nhà nước ta hiện nay?", a: {"A": "Mỗi dân tộc ở Việt Nam đều có sắc thái văn hoá riêng, góp phần làm nên sự đa dạng, phong phú, thống nhất của văn hoá Việt Nam.", "B": "Quy hoạch, phân bố, sắp xếp lại dân cư...", "C": "Nâng cao đời sống đồng bào các dân tộc thiểu số...", "D": "Nâng cao đời sống đồng bào các dân tộc thiểu số..."}, true: "A" },
+        { id: 47, q: "Anh (chị) cho biết nội dung nào sau đây đúng với đặc điểm của dân tộc Việt Nam?", a: {"A": "Các dân tộc thiểu số ở Việt Nam cư trú phân tán và xen kẽ trên địa bàn rộng lớn, chủ yếu là miền núi, biên giới, hải đảo.", "B": "Các dân tộc thực hiện bình đẳng, đoàn kết, tôn trọng giúp đỡ nhau...", "C": "Thực hiện bình đẳng giữa các dân tộc cả về quyền và nghĩa vụ...", "D": "Các dân tộc được quy hoạch và phân bố lại dân cư..."}, true: "A" },
+        { id: 48, q: "Anh (chị) tìm cụm từ còn thiếu: “Đấu tranh ngăn chặn các hoạt động......... làm phương hại đến lợi ích chung của đất nước”", a: {"A": "“Diễn biến hòa bình”, “bạo loạn lật đổ” của các thế lực thù địch lợi dụng tôn giáo.", "B": "Của các thế lực thù địch lợi dụng tín ngưỡng tôn giáo và mê tín dị đoan.", "C": "Của các tổ chức tôn giáo không được pháp luật Việt Nam thừa nhận.", "D": "Mê tín dị đoan, các hành vi lợi dụng tín ngưỡng tôn giáo."}, true: "C" },
+        { id: 49, q: "Anh (chị) cho biết nội dung nào đúng với thủ đoạn lợi dụng vấn đề dân tộc, tôn giáo chống phá cách mạng Việt Nam của các thế lực thù địch?", a: {"A": "Trực tiếp phá hoại khối đại đoàn kết toàn dân tộc, chia rẽ dân tộc đa số với dân tộc thiểu số và giữa các dân tộc thiểu số với nhau.", "B": "Chúng tập trung phá hoại các cơ sở kinh tế xã hội; mua chuộc, lôi kéo...", "C": "Chia rẽ đồng bào theo tôn giáo và không theo tôn giáo...", "D": "Vô hiệu hoá sự quản lí của Nhà nước đối với các lĩnh vực đời sống xã hội..."}, true: "A" },
+        { id: 50, q: "Anh (chị) cho biết nội dung nào đúng với giải pháp nâng cao nhận thức xây dựng khối đại đoàn kết dân tộc cho đồng bào dân tộc, tôn giáo?", a: {"A": "Phát huy vai trò của cả hệ thống chính trị; của những người có uy tín trong các dân tộc, tôn giáo tham gia vào tuyên truyền, giám sát...", "B": "Tập trung hoàn thiện và triển khai thực hiện tốt các chính sách dân tộc...", "C": "Phát huy những giá trị văn hóa, đạo đức tốt đẹp của các tôn giáo...", "D": "Nghiêm trị mọi âm mưu, hành động chia rẽ, phá hoại khối đại đoàn kết toàn dân tộc..."}, true: "A" },
+        { id: 51, q: "Anh (chị) cho biết nội dung nào sau đây đúng với chính sách của Đảng, Nhà nước ta về dân tộc?", a: {"A": "Nâng cao đời sống đồng bào các dân tộc thiểu số, giữ gìn và phát huy bản sắc văn hóa các dân tộc.", "B": "Chống tư tưởng dân tộc lớn, dân tộc hẹp hòi, kỳ thị, chia rẽ dân tộc...", "C": "Giữ gìn bản sắc văn hóa riêng của các dân tộc, phát triển và làm phong phú thêm...", "D": "Củng cố và nâng cao chất lượng hệ thống chính trị ở cơ sở vùng đồng bào dân tộc thiểu số."}, true: "A" },
+        { id: 52, q: "Theo hướng dẫn kỹ thuật phân loại rác tại nguồn của Bộ Tài nguyên và Môi trường, chất thải rắn sinh hoạt được phân làm mấy loại?", a: {"A": "3 loại gồm: chất thải tái chế, chất thải thực phẩm và chất thải khác", "B": "4 loại gồm: chất thải tái chế, chất thải thực phẩm, chất thải nguy hại và chất thải khác", "C": "2 loại gồm: chất thải tái chế và chất thải không tái chế", "D": "Cả ba đáp án trên"}, true: "A" },
+        { id: 53, q: "Những loại chất thải rắn sinh hoạt nào sau đây có thể tái chế được?", a: {"A": "Giấy thải, nhựa thải, kim loại thải", "B": "Giấy thải, nhựa thải, kim loại thải, thuỷ tinh thải", "C": "Giấy thải, vải, đồ da, đồ gỗ, cao su, thiết bị điện tử thải bỏ", "D": "Tất cả các đáp án trên"}, true: "B" },
+        { id: 54, q: "Chất thải nguy hại bao gồm những loại gì?", a: {"A": "Bao bì đựng thuốc bảo vệ thực vật... (nội dung dài)", "B": "Các loại bóng đèn huỳnh quang thải; thủy tinh hoạt tính thải...", "C": "Các loại pin, ắc quy thải.", "D": "Tất cả các loại trên"}, true: "D" },
+        { id: 55, q: "Chất lượng môi trường không khí ở Việt Nam (VN AQI) được phân làm mấy loại?", a: {"A": "4 loại gồm xanh, vàng, đỏ, nâu", "B": "5 loại gồm xanh, vàng, đỏ, tím, nâu", "C": "6 loại gồm xanh, vàng, cam, đỏ, tím, nâu", "D": "7 loại gồm xanh, vàng, cam, hồng, đỏ, tím, nâu"}, true: "C" },
+        { id: 56, q: "Các màu sắc nào sau đây được biểu thị cho chất lượng môi trường không khí ô nhiễm?", a: {"A": "Cam, đỏ, tím, nâu", "B": "Xanh, cam, tím, nâu", "C": "Vàng, đỏ, tím, nâu", "D": "Vàng, cam, đỏ, tím"}, true: "A" },
+        { id: 57, q: "Mức độ ô nhiễm không khí nghiêm trọng nhất được quy định bằng màu gì?", a: {"A": "Đỏ", "B": "Nâu", "C": "Cam", "D": "Tím"}, true: "B" },
+        { id: 58, q: "Theo khuyến cáo của Bộ Y tế, vào những ngày môi trường không khí bị ô nhiễm ở mức độ cần làm gì?", a: {"A": "Hạn chế hoạt động ngoài trời, hạn chế mở cửa sổ...", "B": "Đeo khẩu trang khi ra ngoài.", "C": "Vệ sinh mũi, súc họng sáng tối bằng nước muối sinh lý...", "D": "Tất cả các biện pháp trên."}, true: "D" },
+        { id: 59, q: "Ngày Môi trường thế giới hàng năm tổ chức vào ngày nào?", a: {"A": "Ngày 4/6", "B": "Ngày 5/6", "C": "Ngày 6/6", "D": "Ngày 7/6"}, true: "B" },
+        { id: 60, q: "Sự kiện Giờ Trái Đất hàng năm tổ chức vào ngày nào?", a: {"A": "[Trống]", "B": "Ngày thứ Bảy cuối cùng của tháng 3", "C": "Ngày thứ Bảy cuối cùng của tháng 4", "D": "Ngày thứ Bảy cuối cùng của tháng 5"}, true: "B" },
+        { id: 61, q: "Chủ đề sự kiện Giờ Trái Đất 2024 là gì?", a: {"A": "Kiến tạo tương lai, bây giờ hoặc không bao giờ.", "B": "Tiết kiệm điện - thành thói quen.", "C": "Lên tiếng vì thiên nhiên.", "D": "Giảm dấu chân Carbon - Hướng tới Net Zero."}, true: "D" },
+        { id: 62, q: "Hoạt động chính trong sự kiện Giờ Trái Đất là gì?", a: {"A": "Tắt đèn và các thiết bị điện không cần thiết trong một giờ đồng hồ.", "B": "Tổ chức nhặt rác, dọn dẹp vệ sinh môi trường sống.", "C": "Tổ chức các hoạt động trồng cây xanh.", "D": "Tắt đèn và các thiết bị điện không cần thiết trong một giờ đồng hồ."}, true: "A" },
+        { id: 63, q: "Chiến dịch Làm cho thế giới sạch hơn do quốc gia nào khởi xướng?", a: {"A": "Hoa Kỳ", "B": "Đức", "C": "Nhật", "D": "Australia"}, true: "D" },
+        { id: 64, q: "Hoạt động nào sau đây gây ô nhiễm không khí?", a: {"A": "Sản xuất công nghiệp", "B": "Phun thuốc trừ sâu", "C": "Vứt rác bừa bãi", "D": "Chặt phá rừng"}, true: "A" },
+        { id: 65, q: "Các hoạt động chính trong Chiến dịch làm cho thế giới sạch hơn tại Việt Nam gồm:", a: {"A": "Ra quân làm vệ sinh môi trường.", "B": "Tổ chức các hoạt động trồng cây, giữ gìn, đảm bảo vệ sinh môi trường.", "C": "Đẩy mạnh công tác tuyên truyền, phổ biến, giáo dục...", "D": "Tất cả các hoạt động trên."}, true: "D" },
+        { id: 66, q: "Mỗi ngày Việt Nam thải ra môi trường khoảng bao nhiêu tấn rác thải sinh hoạt?", a: {"A": "100.000 tấn", "B": "60.000 tấn", "C": "90.000 tấn", "D": "50.000 tấn"}, true: "B" },
+        { id: 67, q: "Nguyên nhân chủ yếu gây ô nhiễm khí thải?", a: {"A": "Do hoạt động phun trào của núi lửa.", "B": "Do quá trình đốt cháy nguyên liệu hóa thạch.", "C": "Do hoạt động hô hấp ở thực vật và động vật.", "D": "Do quá trình đốt cháy nguyên liệu sinh học."}, true: "B" },
+        { id: 68, q: "Nguyên nhân trực tiếp của biến đổi khí hậu toàn cầu hiện nay là gì?", a: {"A": "Ô nhiễm môi trường.", "B": "Suy giảm tầng ozon.", "C": "Hàm lượng các khí nhà kính nhân tạo trong khí quyển tăng lên.", "D": "Tất cả các đáp án trên."}, true: "B" },
+        { id: 69, q: "Các hoá chất bảo vệ thực vật và chất độc hoá học thường tích tụ ở những môi trường nào?", a: {"A": "Môi trường đất, môi trường không khí.", "B": "Môi trường nước, Môi trường không khí.", "C": "Môi trường nước.", "D": "Môi trường đất, môi trường nước, môi trường không khí."}, true: "D" },
+        { id: 70, q: "Để bảo vệ thiên nhiên hoang dã cần ngăn chặn hoạt động nào dưới đây?", a: {"A": "Trồng cây, gây rừng để tạo môi trường sống cho động vật hoang dã.", "B": "Săn bắt thú hoang dã, quý hiếm.", "C": "Xây dựng các khu bảo tồn, rừng đầu nguồn.", "D": "Bảo vệ rừng già, rừng đầu nguồn."}, true: "B" },
+        { id: 71, q: "Luật bảo vệ môi trường được Nhà nước ta ban hành lần đầu tiên vào?", a: {"A": "Tháng 8-1991.", "B": "Tháng 1-1994.", "C": "Tháng 12-2003.", "D": "Tháng 4-2007."}, true: "B" },
+        { id: 72, q: "Nhà nước ban hành Luật bảo vệ môi trường nhằm mục đích?", a: {"A": "Tăng cường công tác quản lí của Nhà nước về bảo vệ môi trường.", "B": "Xử phạt các hành vi vi phạm môi trường.", "C": "Xây dựng ý thức trách nhiệm bảo vệ môi trường cho người dân.", "D": "Thực hiện vai trò quản lí của Nhà nước đối với môi trường."}, true: "A" },
+        { id: 73, q: "Hiện nay Việt Nam đang đứng thứ mấy trên thế giới về ô nhiễm rác thải biển, đặc biệt là rác thải nhựa?", a: {"A": "Thứ 2.", "B": "Thứ 3.", "C": "Thứ 4.", "D": "Thứ 5."}, true: "C" },
+        { id: 74, q: "Biểu hiện của biến đổi khí hậu là gì?", a: {"A": "Nhiệt độ trung bình tăng cao.", "B": "Mực nước biển dâng.", "C": "Thiên tai xảy ra ngày càng nhiều.", "D": "Cả 3 biểu hiện trên."}, true: "D" },
+        { id: 75, q: "Nội dung nào dưới đây là một trong các mục tiêu của chính sách tài nguyên và bảo vệ môi trường?", a: {"A": "Khai thác nhiều tài nguyên để đẩy mạnh phát triển kinh tế.", "B": "Sử dụng hợp lí tài nguyên.", "C": "Ngăn chặn tình trạng huỷ hoại môi trường.", "D": "Áp dụng công nghệ hiện đại để xử lí chất thải."}, true: "B" },
+        { id: 76, q: "Anh (Chị) cho biết vị trí của pháp luật về bảo đảm trật tự, an toàn giao thông là gì?", a: {"A": "Là một bộ phận của hệ thống pháp luật hành chính Nhà nước...", "B": "Là một trong lĩnh vực quản lý của Nhà nước về trật tự, an toàn giao thông.", "C": "Là một bộ phận của hệ thống pháp luật hành chính Nhà nước.", "D": "Là một bộ phận của hệ thống pháp luật hành chính Nhà nước."}, true: "C" },
+        { id: 77, q: "Anh (Chị) cho biết mục đích của pháp luật về bảo đảm trật tự, an toàn giao thông là gì?", a: {"A": "Nhằm điều chỉnh các quan hệ xã hội phát sinh trong quá trình tổ chức, thực hiện hoạt động chấp hành và điều hành của các cơ quan quản lý nhà nước...", "B": "Nhằm ngăn chặn, làm giảm từng bước vi phạm pháp luật về bảo đảm trật tự...", "C": "Nhằm hạn chế tối đa các nguyên nhân, điều kiện dẫn đến vi phạm pháp luật...", "D": "Nhằm khắc phục triệt để không còn hiện tượng vi phạm pháp luật..."}, true: "A" },
+        { id: 78, q: "Anh (Chị) cho biết vai trò của pháp luật về bảo đảm trật tự, an toàn giao thông là gì?", a: {"A": "Là ý chí của Nhà nước để chỉ đạo và tổ chức thực hiện bảo đảm trật tự...", "B": "Là cơ sở, công cụ pháp lý quan trọng để thực hiện chức năng quản lý Nhà nước...", "C": "Là nội dung quan trọng để bảo đảm trật tự, an toàn giao thông...", "D": "Cả A và B."}, true: "D" },
+        { id: 79, q: "Anh (Chị) cho biết chủ thể nào có thẩm quyền ban hành các văn bản quy phạm pháp luật có liên quan đến bảo đảm trật tự, an toàn giao thông?", a: {"A": "Quốc hội.", "B": "Các cơ quan hành chính ở trung ương, địa phương, các cơ quan liên ngành, liên bộ.", "C": "Tất cả các bộ, ngành.", "D": "Tất cả các đáp án trên."}, true: "D" },
+        { id: 80, q: "Anh (Chị) cho biết đâu là dạng vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Vi phạm hành chính.", "B": "Vi phạm hình sự.", "C": "Vi phạm hợp đồng dân sự.", "D": "Cả A và B."}, true: "D" },
+        { id: 81, q: "Anh (Chị) cho biết các dấu hiệu vi phạm hành chính xảy ra trong bảo đảm trật tự, an toàn giao thông là gì?", a: {"A": "Tính nguy hiểm cho xã hội.", "B": "Tính trái pháp luật về bảo đảm trật tự, an toàn giao thông.", "C": "Tính có lỗi.", "D": "Tất cả các đáp án trên."}, true: "D" },
+        { id: 82, q: "Anh (Chị) cho biết đâu là dấu hiệu vi phạm hành chính xảy ra trong bảo đảm trật tự, an toàn giao thông?", a: {"A": "Hành vi phóng nhanh, vượt ẩu khi tham gia giao thông.", "B": "Tính chủ quan, lơi lỏng trong tham gia giao thông.", "C": "Tính nguy hiểm cho xã hội.", "D": "Tất cả các đáp án trên."}, true: "D" },
+        { id: 83, q: "Anh (Chị) cho biết đâu là nguyên nhân, điều kiện cơ bản dẫn đến vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Quản lý nhà nước về hoạt động giao thông còn nhiều yếu kém, hạn chế.", "B": "Ý thức tự giác chấp hành pháp luật trật tự, an toàn giao thông của người tham gia giao thông còn nhiều hạn chế.", "C": "Sự không tương thích giữa các yếu tố cơ bản cấu thành hoạt động giao thông vận tải quốc gia.", "D": "Tất cả các đáp án trên."}, true: "D" },
+        { id: 84, q: "Anh (Chị) cho biết đâu là nguyên nhân, điều kiện cơ bản dẫn đến vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Quản lý nhà nước về hoạt động giao thông có nhiều tiến bộ.", "B": "Ý thức tự giác chấp hành pháp luật trật tự... đã được nâng lên.", "C": "Sự không tương thích giữa các yếu tố cơ bản cấu thành hoạt động giao thông vận tải quốc gia.", "D": "Tất cả các đáp án trên."}, true: "C" },
+        { id: 85, q: "Anh (Chị) cho biết một trong những nguyên nhân, điều kiện cơ bản dẫn đến vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông là gì?", a: {"A": "Sự phối hợp giữa các cơ quan chuyên trách chưa tốt.", "B": "Vai trò của đội ngũ cán bộ, chiến sĩ công an giao thông còn hạn chế...", "C": "Ý thức tự giác chấp hành pháp luật trật tự, an toàn giao thông của người tham gia giao thông còn nhiều hạn chế.", "D": "Sự không tương thích giữa các yếu tố cơ bản cấu thành hoạt động giao thông..."}, true: "C" },
+        { id: 86, q: "Anh (Chị) cho biết công tác thực hiện phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông là nhiệm vụ của chủ thể nào?", a: {"A": "Công an nhân dân, Quân đội nhân dân.", "B": "Của toàn xã hội.", "C": "Quốc hội, Chính phủ và ủy ban nhân dân các cấp.", "D": "Nhà nước cùng các ngành, các tổ chức đoàn thể và công dân."}, true: "B" },
+        { id: 87, q: "Anh (Chị) cho biết vai trò, trách nhiệm của Nhà trường trong đấu tranh phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Kết hợp với các tổ chức, đoàn thể quần chúng phát hiện phòng chống vi phạm pháp luật...", "B": "Tăng cường công tác tuyên truyền, phổ biến, giáo dục pháp luật về trật tự, an toàn giao thông cho học sinh, sinh viên.", "C": "Kết hợp với lực lượng công an địa phương phát hiện, đấu tranh xử lí vi phạm...", "D": "Chủ động nghiên cứu các chủ trương, biện pháp để tổ chức phòng chống vi phạm pháp luật..."}, true: "B" },
+        { id: 88, q: "Nghị định số 168/2024/NĐ-CP ngày 26 tháng 12 năm 2024 ... quy định phạt tiền từ 8.000.000 đồng đến 10.000.000 đồng đối với người điều khiển xe mô tô, xe gắn máy thực hiện hành vi vi phạm nào sau đây?", a: {"A": "Điều khiển xe trên đường mà trong máu hoặc hơi thở có nồng độ cồn vượt quá 80 miligam/100 mililít máu hoặc vượt quá 0,4 miligam/1 lít khí thở.", "B": "Điều khiển xe chạy quá tốc độ quy định trên 20 km/h.", "C": "Không chấp hành hiệu lệnh của đèn tín hiệu giao thông.", "D": "Đi ngược chiều của đường một chiều; đi ngược chiều trên đường có biển \"Cấm đi ngược chiều\"..."}, true: "A" },
+        { id: 89, q: "Nghị định số 168/2024/NĐ-CP ngày 26 tháng 12 năm 2024 ... quy định phạt tiền từ 6.000.000 đồng đến 8.000.000 đồng đối với người điều khiển xe mô tô, xe gắn máy thực hiện hành vi vi phạm nào sau đây?", a: {"A": "Chưa vượt quá 50 miligam/100 mililít máu hoặc chưa vượt quá 0,25 miligam/1 lít khí thở.", "B": "Điều khiển xe trên đường mà trong máu hoặc hơi thở có nồng độ cồn vượt quá 50 miligam đến 80 miligam/100 mililít máu hoặc vượt quá 0,25 miligam đến 0,4 miligam/1 lít khí thở.", "C": "Điều khiển xe trên đường mà trong máu hoặc hơi thở có nồng độ cồn vượt quá 80 miligam/100 mililít máu hoặc vượt quá 0,4 miligam/1 lít khí thở.", "D": "Điều khiển xe trên đường mà trong máu hoặc hơi thở có nồng độ cồn vượt quá 50 miligam/100 mililít máu hoặc vượt quá 0,25 miligam đến 0,4 miligam/ 1 lít khí thở."}, true: "B" },
+        { id: 90, q: "Anh (Chị) cho biết Nghị định số 168/2024/NĐ-CP ngày 26 tháng 12 năm 2024 quy định xử phạt vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông trên các lĩnh vực nào?", a: {"A": "Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắt.", "B": "Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ.", "C": "Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường thủy nội địa.", "D": "Cả B và C."}, true: "A" },
+        { id: 91, q: "Theo Nghị định số 168/2024/NĐ-CP ngày 26 tháng 12 năm 2024, người điều khiển xe mô tô, gắn máy trên đường mà trong máu hoặc hơi thở có nồng độ cồn nhưng chưa vượt quá 50 miligam/100 mililít máu hoặc chưa vượt quá 0,25 miligam/1 lít khí thở thì bị phạt tiền là bao nhiêu?", a: {"A": "2 triệu - 3 triệu đồng.", "B": "4 triệu - 5 triệu đồng.", "C": "6 triệu - 8 triệu đồng.", "D": "8 triệu - 10 triệu đồng."}, true: "A" },
+        { id: 92, q: "Theo Nghị định số 168/2024/NĐ-CP ngày 26 tháng 12 năm 2024 quy định mức phạt từ 800.000 đồng đến 1.000.000 đồng đối với hành vi nào sau đây?", a: {"A": "Người điều khiển xe chạy quá tốc độ quy định từ 05 km/h đến dưới 10 km/h.", "B": "Người điều khiển xe chạy quá tốc độ quy định từ 10 km/h đến 20 km/h.", "C": "Người điều khiển xe chạy quá tốc độ quy định trên 20 km/h.", "D": "Cả đáp án A và B."}, true: "A" },
+        { id: 93, q: "Anh (Chị) cho biết một trong những nội dung biện pháp phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Tuyên truyền, phổ biến, giáo dục pháp luật về bảo đảm trật tự, an toàn giao thông để nâng cao ý thức chấp hành pháp luật về trật tự, an toàn giao thông cho người dân.", "B": "Tuyên truyền, phổ biến, giáo dục pháp luật về bảo đảm trật tự, an toàn giao thông để nâng cao ý thức chấp hành pháp luật về bảo đảm trật tự, an toàn giao thông cho người dân.", "C": "Tuyên truyền, phổ biến, giáo dục về bảo đảm trật tự, an toàn giao thông để nâng cao ý thức chấp hành pháp luật về bảo đảm trật tự, an toàn giao thông đường bộ cho người dân.", "D": "Tất cả các đáp án trên đều đúng."}, true: "B" },
+        { id: 94, q: "Anh (Chị) cho biết đâu là những nội dung biện pháp phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Tham mưu, đề xuất với Nhà nước xây dựng và hoàn thiện hệ thống các văn bản pháp luật...", "B": "Tuyên truyền, phổ biến, giáo dục pháp luật về bảo đảm trật tự, an toàn giao thông cho sinh viên.", "C": "Tổ chức phát động phong trào toàn dân tham gia phòng, chống vi phạm pháp luật...", "D": "Cả A và C."}, true: "D" },
+        { id: 95, q: "Anh (Chị) cho biết đâu là những nội dung biện pháp phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Tham mưu, đề xuất với Nhà nước xây dựng và hoàn thiện hệ thống các văn bản pháp luật...", "B": "Tuyên truyền, phổ biến, giáo dục pháp luật về bảo đảm trật tự, an toàn giao thông...", "C": "Tổ chức phát động phong trào toàn dân tham gia phòng, chống vi phạm pháp luật...", "D": "Tất cả các đáp án trên."}, true: "D" },
+        { id: 96, q: "Anh (Chị) cho biết đâu là những nội dung biện pháp phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Tổ chức phát động phong trào toàn dân tham gia phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông gắn với vận động thực hiện phong trào \"Toàn dân tham gia bảo vệ an ninh Tổ quốc\".", "B": "Tuyên truyền, phổ biến, giáo dục pháp luật về bảo đảm trật tự, an toàn giao thông...", "C": "Tham mưu, đề xuất với Nhà trường xây dựng và hoàn thiện hệ thống các văn bản pháp luật...", "D": "Tất cả các đáp án đều sai."}, true: "A" },
+        { id: 97, q: "Anh (Chị) cho biết trách nhiệm của Nhà trường trong phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Tăng cường công tác tuyên truyền, phổ biến, giáo dục pháp luật về trật tự, an toàn giao thông đến mọi đối tượng sinh viên, học sinh.", "B": "Tăng cường công tác giáo dục, quản lý giáo viên khi tham gia giao thông.", "C": "Phối hợp với lực lượng chức năng tăng cường tuần tra, phát hiện và xử lý nghiêm...", "D": "Quản lý chặt chẽ phương tiện giao thông của giáo viên, sinh viên, học sinh."}, true: "A" },
+        { id: 98, q: "Anh (Chị) cho biết trách nhiệm của sinh viên trong phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Tuyên truyền phổ biến pháp luật phòng chống vi phạm pháp luật về đảm bảo trật tự, an toàn giao thông cho mọi người.", "B": "Phối hợp với lực lượng chức năng tăng cường tuần tra, phát hiện và xử lý nghiêm...", "C": "Chấp hành nghiêm chỉnh những nội quy, quy định của Nhà trường trong đảm bảo trật tự, an toàn giao thông.", "D": "Cả đáp án A và C."}, true: "D" },
+        { id: 99, q: "Anh (Chị) cho biết trách nhiệm của sinh viên trong phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Tuyên truyền phổ biến pháp luật phòng chống vi phạm pháp luật về đảm bảo trật tự, an toàn giao thông cho học sinh.", "B": "Phối hợp với lực lượng chức năng tăng cường tuần tra, phát hiện những hành vi vi phạm...", "C": "Trực tiếp tham gia các hoạt động phòng ngừa vi phạm pháp luật về đảm bảo trật tự an toàn giao thông, tham gia vào các tổ chức thanh niên xung kích.", "D": "Cả đáp án A và C."}, true: "C" },
+        { id: 100, q: "Anh (Chị) cho biết trách nhiệm của sinh viên trong phòng, chống vi phạm pháp luật về bảo đảm trật tự, an toàn giao thông?", a: {"A": "Khi có vụ việc vi phạm trật tự an toàn giao thông đối với sinh viên của Nhà trường phải kịp thời phát hiện và cung cấp thông tin có liên quan cho lãnh đạo Nhà trường và cho cơ quan chức năng.", "B": "Tuyên truyền phổ biến pháp luật phòng chống vi phạm pháp luật...", "C": "Tham mưu, đề xuất với Nhà trường xây dựng và hoàn thiện hệ thống các văn bản pháp luật...", "D": "Cả B và C đều đúng."}, true: "A" },
+        { id: 101, q: "Anh/chị cho biết chủ thể của tội phạm là ai?", a: {"A": "Người có năng lực trách nhiệm hình sự", "B": "Người có năng lực trách nhiệm hình sự và đạt đến một độ tuổi nhất định", "C": "Pháp nhân thương mại", "D": "Cả A và C"}, true: "D" },
+        { id: 102, q: "Anh/ chị cho biết có mấy yếu tố để cấu thành tội phạm?", a: {"A": "3 yếu tố", "B": "4 yếu tố", "C": "5 yếu tố", "D": "6 yếu tố"}, true: "B" },
+        { id: 103, q: "Anh/ chị cho biết chủ thể của tội phạm xâm phạm danh dự, nhân phẩm của con người là ai?", a: {"A": "Người có năng lực trách nhiệm hình sự.", "B": "Là pháp nhân thương mại.", "C": "Người có năng lực trách nhiệm hình sự và đạt độ tuổi nhất định", "D": "Người có năng lực trách nhiệm hình sự và pháp nhân thương mại"}, true: "C" },
+        { id: 104, q: "Anh/chị cho biết mặt chủ quan của tội phạm xâm phạm danh dự, nhân phẩm của con người được thực hiện như thế nào?", a: {"A": "Phần lớn các tội phạm được thực hiện với lỗi vô ý.", "B": "Phần lớn các tội phạm được thực hiện với lỗi cố ý.", "C": "Phần lớn các tội phạm được thực hiện với lỗi cố ý trực tiếp.", "D": "Phần lớn các tội phạm được thực hiện với lỗi cố ý gián tiếp."}, true: "C" },
+        { id: 105, q: "Anh/chị cho biết tội phạm xâm phạm danh dự, nhân phẩm của con người được chia thành mấy nhóm chính?", a: {"A": "3 nhóm", "B": "4 nhóm", "C": "5 nhóm", "D": "6 nhóm"}, true: "B" },
+        { id: 106, q: "Anh/chị cho biết phòng ngừa tội phạm được thực hiện theo hướng nào?", a: {"A": "Phát hiện, khắc phục, hạn chế và đi đến thủ tiêu các hiện tượng xã hội tiêu cực", "B": "Hạn chế đến mức thấp nhất hậu quả, tác hại khi tội phạm xảy ra", "C": "Các cơ quan chức năng phải phối hợp nhịp nhàng", "D": "A và B"}, true: "D" },
+        { id: 107, q: "Anh/chị cho biết có mấy biện pháp phòng ngừa tội phạm xâm phạm danh dự, nhân phẩm của người khác?", a: {"A": "Có 2 biện pháp", "B": "Có 3 biện pháp", "C": "Có 4 biện pháp", "D": "Có 5 biện pháp"}, true: "C" },
+        { id: 108, q: "Anh/ chị cho biết có mấy nguyên tắc trong phòng ngừa tội phạm xâm phạm danh dự, nhân phẩm người khác?", a: {"A": "Có 3 nguyên tắc", "B": "Có 4 nguyên tắc", "C": "Có 5 nguyên tắc", "D": "Có 6 nguyên tắc"}, true: "D" },
+        { id: 109, q: "Anh/chị cho biết chủ thể trong hoạt động phòng ngừa tội phạm xâm phạm danh dự, nhân phẩm của người khác là ai?", a: {"A": "Quốc hội, hội đồng nhân dân các cấp", "B": "Chính phủ, ủy ban nhân dân các cấp", "C": "Các cơ quan bảo vệ pháp luật và công dân", "D": "Cả A, B và C"}, true: "D" },
+        { id: 110, q: "Anh/chị cho biết có mấy nội dung hoạt động phòng chống tội phạm xâm phạm danh dự, nhân phẩm người khác?", a: {"A": "Có 2 nội dung", "B": "Có 3 nội dung", "C": "Có 4 nội dung", "D": "Có 5 nội dung"}, true: "A" },
+        { id: 111, q: "Anh/chị cho biết, Điều 141 bộ luật hình sự năm 2015 (sửa đổi bổ sung năm 2017) quy định về tội hiếp dâm có khung hình phạt nhẹ nhất là bao nhiêu?", a: {"A": "Bị phạt tù từ 02 năm đến 07 năm.", "B": "Bị phạt tù từ 02 năm đến 8 năm", "C": "Bị phạt tù từ 03 năm đến 7 năm", "D": "Bị phạt tù từ 02 năm đến 7 năm"}, true: "A" },
+        { id: 112, q: "Anh/chị cho biết, Điều 142 bộ luật hình sự năm 2015 (sửa đổi bổ sung năm 2017) quy định về tội hiếp dâm người dưới 16 tuổi có khung hình phạt nhẹ nhất là bao nhiêu?", a: {"A": "Bị phạt tù từ 02 năm đến 07 năm.", "B": "Bị phạt tù từ 02 năm đến 9 năm", "C": "Bị phạt tù từ 02 năm đến 12 năm", "D": "Bị phạt tù từ 07 năm đến 15 năm"}, true: "D" },
+        { id: 113, q: "Anh/chị cho biết, Điều 143 bộ luật hình sự năm 2015 (sửa đổi bổ sung năm 2017) quy định về cưỡng dâm thì có khung hình phạt nhẹ nhất là bao nhiêu?", a: {"A": "Bị phạt tù từ 01 năm đến 05 năm.", "B": "Bị phạt tù từ 02 năm đến 05 năm", "C": "Bị phạt tù từ 01 năm đến 04 năm", "D": "Bị phạt tù từ 02 năm đến 05 năm"}, true: "A" },
+        { id: 114, q: "Anh/chị cho biết, Điều 145 bộ luật hình sự năm 2015 quy định về tội giao cấu hoặc thực hiện hành vi quan hệ tình dục khác với người từ đủ 13 tuổi đến dưới 16 tuổi thì có khung hình phạt nhẹ nhất là bao nhiêu?", a: {"A": "Bị phạt tù từ 01 năm đến 05 năm.", "B": "Bị phạt tù từ 02 năm đến 05 năm", "C": "Bị phạt tù từ 01 năm đến 04 năm", "D": "Bị phạt tù từ 02 năm đến 04 năm"}, true: "A" },
+        { id: 115, q: "Anh/chị cho biết, Điều 155 bộ luật hình sự năm 2015 quy định về tội làm nhục người khác có khung hình phạt nhẹ nhất là bao nhiêu?", a: {"A": "Bị phạt cảnh cáo, phạt tiền từ 10.000.000 đồng đến 30.000.000 đồng hoặc phạt cải tạo không giam giữ đến 03 năm.", "B": "Bị phạt tù từ 02 năm đến 05 năm", "C": "Bị phạt tù từ 01 năm đến 04 năm", "D": "Bị phạt tù từ 01 năm đến 05 năm"}, true: "A" },
+        { id: 116, q: "Anh/chị cho biết, Điều 156 bộ luật hình sự năm 2015 quy định về tội vu khống người khác có khung hình phạt nhẹ nhất là bao nhiêu?", a: {"A": "Bị phạt tiền từ 10.000.000 đồng đến 50.000.000 đồng, phạt cải tạo không giam giữ đến 02 năm hoặc phạt tù từ 03 tháng đến 01 năm", "B": "Bị phạt tù từ 01 năm đến 03 năm", "C": "Bị phạt tù từ 01 năm đến 04 năm", "D": "Bị phạt tiền từ 10.000.000 đồng đến 50.000.000 đồng, phạt cải tạo không giam giữ đến 02 năm hoặc phạt tù từ 03 tháng đến 01 năm"}, true: "A" },
+        { id: 117, q: "Anh/ chị cho biết khi tổ chức hoạt động phòng ngừa tội phạm nào ta cần tuân thủ theo những nguyên tắc nào?", a: {"A": "Nguyên tắc pháp chế", "B": "Nguyên tắc suy đoán", "C": "Nguyên tắc công bằng", "D": "Nguyên tắc đạo đức"}, true: "A" },
+        { id: 118, q: "Anh/ chị cho biết khi tổ chức hoạt động phòng ngừa tội phạm nào ta cần tuân thủ theo những nguyên tắc nào?", a: {"A": "Nguyên tắc suy đoán", "B": "Nguyên tắc dân chủ xã hội chủ nghĩa", "C": "Nguyên tắc công bằng", "D": "Nguyên tắc pháp chế"}, true: "B" },
+        { id: 119, q: "Anh/ chị cho biết khi tổ chức hoạt động phòng ngừa tội phạm nào ta cần tuân thủ theo những nguyên tắc nào?", a: {"A": "Nguyên tắc suy đoán", "B": "Nguyên tắc công bằng", "C": "Nguyên tắc nhân đạo", "D": "Nguyên tắc đạo đức"}, true: "C" },
+        { id: 120, q: "Anh/ chị cho biết khi tổ chức hoạt động phòng ngừa tội phạm nào ta cần tuân thủ theo những nguyên tắc nào?", a: {"A": "Nguyên tắc suy đoán", "B": "Nguyên tắc công bằng", "C": "Nguyên tắc đạo đức", "D": "Nguyên tắc khoa học và tiến bộ"}, true: "D" },
+        { id: 121, q: "Anh/ chị cho biết có mấy nguyên nhân chính dẫn đến tình trạng phạm tội danh dự, nhân phẩm của người khác?", a: {"A": "Có 6 nguyên nhân", "B": "Có 7 nguyên nhân", "C": "Có 8 nguyên nhân", "D": "Có 9 nguyên nhân"}, true: "D" },
+        { id: 122, q: "Theo anh chị thì tình trạng phạm tội danh dự, nhân phẩm của người khác được xuất phát từ những nguyên nhân nào sau đây?", a: {"A": "Sự tác động bởi sự phát triển của khoa học", "B": "Sự tác động bởi mặt trái của nền kinh tế thị trường", "C": "Sự hiếu thắng, tò mò của tuổi trẻ", "D": "Sự thiếu quan tâm của gia đình"}, true: "B" },
+        { id: 123, q: "Theo anh chị thì tình trạng phạm tội danh dự, nhân phẩm của người khác được xuất phát từ những nguyên nhân nào sau đây?", a: {"A": "Sự tác động bởi sự phát triển của khoa học", "B": "Sự tác động bởi lối sống ích kỷ", "C": "Sự ảnh hưởng của tội phạm và TNXH của các quốc gia khác", "D": "Sự thiếu quan tâm của gia đình"}, true: "C" },
+        { id: 124, q: "Theo anh chị thì tình trạng phạm tội danh dự, nhân phẩm của người khác được xuất phát từ những nguyên nhân nào sau đây?", a: {"A": "Sự thiếu sót trong mặt giáo dục đạo đức, lối sống... của người dân", "B": "Sự tác động bởi lối sống ích kỷ", "C": "Sự ảnh hưởng của tội phạm và TNXH của các quốc gia khác", "D": "Sự thiếu quan tâm của gia đình"}, true: "A" },
+        { id: 125, q: "Theo anh chị thì tình trạng phạm tội danh dự, nhân phẩm của người khác được xuất phát từ những nguyên nhân nào sau đây?", a: {"A": "Công tác quản lí của ngành Công an còn lỏng lẻo", "B": "Công tác giáo dục của Nhà trường của ít", "C": "Công tác quản lí Nhà nước về an ninh trật tự còn bộc lộ nhiều sơ hở", "D": "Công tác dạy dỗ của gia đình thiếu được quan tâm"}, true: "C" },
+        { id: 126, q: "Theo anh chị thì tình trạng phạm tội danh dự, nhân phẩm của người khác được xuất phát từ những nguyên nhân nào sau đây?", a: {"A": "Phong trào đấu tranh chống tội phạm của quần chúng chưa mạnh mẽ", "B": "Công tác đấu tranh chống tội phạm của các cơ quan chức năng còn bộc lộ nhiều yếu kém", "C": "Hệ thống pháp luật chưa hoàn thiện", "D": "Cả A, B và C"}, true: "D" },
+        { id: 127, q: "Anh (Chị) cho biết an toàn thông্তিn là gì?", a: {"A": "An toàn thông tin bảo đảm cho các hoạt động của các cơ sở hạ tầng thông tin, trong đó bao gồm an toàn phần cứng và phần mềm theo các tiêu chuẩn kỹ thuật do Nhà nước ban hành; duy trì các tính chất bí mật, toàn vẹn, sẵn sàng của thông tin.", "B": "An toàn thông tin là an toàn kỹ thuật cho các hoạt động của các cơ sở hạ tầng thông tin, trong đó bao gồm an toàn phần cứng và phần mềm theo các tiêu chuẩn kỹ thuật do Nhà nước ban hành; duy trì các tính chất bí mật, toàn vẹn, sẵn sàng của thông tin trong lưu trữ, xử lý và truyền dẫn trên mạng.", "C": "An toàn thông tin là an toàn kỹ thuật cho các hoạt động của các cơ sở hạ tầng thông tin, trong đó bao gồm an toàn phần cứng và phần mềm theo các tiêu chuẩn kỹ thuật do Nhà nước ban hành.", "D": "An toàn thông tin là an toàn kỹ thuật cho các hoạt động của các cơ sở hạ tầng thông tin, duy trì các tính chất bí mật, toàn vẹn, sẵn sàng của thông tin trong lưu trữ, xử lý và truyền dẫn trên mạng."}, true: "B" },
+        { id: 128, q: "Anh (Chị) cho biết an ninh mạng là gì?", a: {"A": "Là phòng ngừa và bảo vệ hệ thống thông tin trên mạng tránh bị truy nhập, sử dụng, tiết lộ, gián đoạn, sửa đổi hoặc phá hoại trái phép nhằm bảo đảm tính nguyên vẹn, tính bảo mật và tính khả dụng của thông tin.", "B": "Là sự bảo vệ thông tin, hệ thống thông tin trên mạng tránh bị truy nhập, sử dụng, tiết lộ, gián đoạn, sửa đổi hoặc phá hoại trái phép.", "C": "Là sự bảo vệ thông tin, hệ thống thông tin trên mạng tránh bị truy nhập, sử dụng, tiết lộ, gián đoạn, sửa đổi hoặc phá hoại trái phép nhằm bảo đảm tính nguyên vẹn, tính bảo mật và tính khả dụng của thông tin.", "D": "Là sự bảo vệ hệ thống mạng tránh bị truy nhập, sử dụng, tiết lộ, gián đoạn, sửa đổi hoặc phá hoại trái phép nhằm bảo đảm tính nguyên vẹn, tính bảo mật và tính khả dụng của một hệ thống mạng."}, true: "C" },
+        { id: 129, q: "Anh (Chị) cho biết tội phạm sử dụng công nghệ cao là gì?", a: {"A": "Là loại tội phạm sử dụng những thành tựu mới của khoa học - kỹ thuật và công nghệ hiện đại làm công cụ, phương tiện để thực hiện hành vi phạm tội một cách cố ý hoặc vô ý, gây nguy hiểm cho xã hội.", "B": "Là loại tội phạm sử dụng những thành tựu của khoa học - kỹ thuật và công nghệ hiện đại làm công cụ, phương tiện để thực hiện hành vi phạm tội.", "C": "Là loại tội phạm sử dụng những thành tựu mới của công nghệ hiện đại làm công cụ, phương tiện để thực hiện hành vi phạm tội một cách cố ý hoặc vô ý, gây nguy hiểm cho xã hội.", "D": "Là loại tội phạm sử dụng những thành tựu mới của khoa học - kỹ thuật và công nghệ hiện đại làm công cụ, phương tiện để thực hiện hành vi phạm tội một cách cố ý hoặc vô ý."}, true: "A" },
+        { id: 130, q: "Anh (Chị) cho biết chủ thể tội phạm sử dụng công nghệ cao là người như thế nào?", a: {"A": "Là người có trình độ học vấn, chuyên môn cao.", "B": "Là người có thủ đoạn rất tinh vi.", "C": "Hành động của họ khó phát hiện.", "D": "Cả 3 phương án trên."}, true: "D" },
+        { id: 131, q: "Anh (Chị) cho biết thực trạng an toàn thông tin ở Việt Nam như thế nào?", a: {"A": "Tình hình an toàn an ninh mạng tiếp tục diễn biến phức tạp, tồn tại nhiều cơ sở gây nguy cơ bị tấn công.", "B": "An toàn thông tin mạng diễn biến phức tạp ảnh hưởng an ninh quốc gia.", "C": "Tình hình an toàn an ninh mạng tiếp tục diễn biến phức tạp, tồn tại nhiều cơ sở gây nguy cơ bị tấn công, phá hoại hạ tầng mạng thông tin, ảnh hưởng tới an ninh quốc gia.", "D": "Tình hình an toàn an ninh mạng tiếp tục diễn biến phức tạp, tồn tại nhiều cơ sở gây nguy cơ bị tấn công, phá hoại hạ tầng mạng thông tin."}, true: "C" },
+        { id: 132, q: "Anh (Chị) cho biết thuật ngữ SPAM xuất hiện năm nào?", a: {"A": "1968.", "B": "1978.", "C": "1980.", "D": "1987."}, true: "B" },
+        { id: 133, q: "Anh (Chị) cho biết các đối tượng đã sử dụng hình thức gì để tạo ra tin giả?", a: {"A": "Giả hình.", "B": "Giả tiếng.", "C": "Giả video.", "D": "Cả 3 phương án trên."}, true: "D" },
+        { id: 134, q: "Anh (Chị) cho biết Bộ Luật hình sự được sửa đổi, bổ sung và có hiệu lực thi hành ngày tháng năm nào?", a: {"A": "Bộ luật hình sự sửa đổi được Quốc hội thông qua ngày 20/6/2016 và có hiệu lực thi hành 01/01/2017.", "B": "Bộ luật hình sự sửa đổi được Quốc hội thông qua ngày 20/6/2017 và có hiệu lực thi hành 01/01/2018.", "C": "Bộ luật hình sự sửa đổi được Quốc hội thông qua ngày 20/11/2017 và có hiệu lực thi hành 01/7/2018.", "D": "Bộ luật hình sự sửa đổi được Quốc hội thông qua ngày 20/6/2018 và có hiệu lực thi hành 01/01/2019."}, true: "B" },
+        { id: 135, q: "Anh (Chị) cho biết Bộ Luật hình sự có mấy chương và bao nhiêu điều?", a: {"A": "Bộ luật hình sự có 26 chương và 426 điều.", "B": "Bộ luật hình sự có 26 chương và 462 điều.", "C": "Bộ luật hình sự có 27 chương và 426 điều.", "D": "Bộ luật hình sự có 27 chương và 462 điều."}, true: "B" },
+        { id: 136, q: "Anh (Chị) cho biết Mục 2, Chương XXI, Bộ Luật Hình sự quy định tội phạm trong lĩnh vực công nghệ thông tin, mạng viễn thông có mấy điều?", a: {"A": "Có 8 điều.", "B": "Có 9 điều.", "C": "Có 10 điều.", "D": "Có 11 điều."}, true: "B" },
+        { id: 137, q: "Anh (Chị) cho biết Luật An toàn thông tin năm 2015 có bao nhiêu chương và bao nhiêu điều?", a: {"A": "Luật An toàn thông tin năm 2015 có 8 chương và 56 điều.", "B": "Luật An toàn thông tin năm 2015 có 9 chương và 54 điều.", "C": "Luật An toàn thông tin năm 2015 có 9 chương và 56 điều.", "D": "Luật An toàn thông tin năm 2015 có 8 chương và 54 điều."}, true: "D" },
+        { id: 138, q: "Anh (Chị) cho biết Luật an ninh mạng năm 2018 có bao nhiêu chương?", a: {"A": "6 chương", "B": "7 chương", "C": "8 chương", "D": "9 chương"}, true: "B" }
+    ]
+};
+
+// =====================================================================
+// LOGIC HOẠT ĐỘNG CỦA HỆ THỐNG
+// =====================================================================
+let userName = "Khách";
+let isShuffle = false;
+let examMode = 'strict_20';
+let isTestSubmitted = false;
+let currentQuestions = [];
+let userAnswers = {};
+let questionsPerPage = 10;
+let currentPage = 1;
+let totalPages = 1;
+let displayModuleName = "";
+
+// State cho Strict Mode & Tính năng Tắt Tiến Trình
+let invalidAnswers = [];
+let unansweredIds = [];
+let strictCheckedBoxes = [];
+let isProgressMasterEnabled = true;
+
+function openNameForm() {
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('name-screen').style.display = 'flex';
+}
+
+function submitName() {
+    let nameInput = document.getElementById('user-name-input').value.trim();
+    if(nameInput === "") { alert("Vui lòng nhập họ tên của bạn để tiếp tục!"); return; }
+    userName = nameInput;
+    document.getElementById('name-screen').style.display = 'none';
+    document.getElementById('start-banner').style.display = 'flex';
+}
+
+function toggleDropdown(event) {
+    event.stopPropagation();
+    document.getElementById("myDropdown").classList.toggle("show");
+}
+
+function toggleMobileMenu() {
+    document.getElementById('top-menu-container').classList.toggle('open');
+}
+
+function toggleProgressPanel() {
+    document.getElementById('progress-panel').classList.toggle('open');
+}
+
+function toggleMasterProgressDisplay() {
+    isProgressMasterEnabled = !isProgressMasterEnabled;
+    const panel = document.getElementById('progress-panel');
+    const btn = document.getElementById('toggle-progress-master-btn');
+    const mobileBtn = document.getElementById('mobile-progress-btn');
+    
+    if (isProgressMasterEnabled) {
+        panel.style.display = 'block';
+        if(window.innerWidth <= 768) {
+            mobileBtn.style.display = 'flex';
+            panel.classList.remove('open');
+        }
+        btn.innerHTML = "📊 Tắt Tiến Trình";
+        btn.style.backgroundColor = "#e6a83a";
+    } else {
+        panel.style.display = 'none';
+        mobileBtn.style.display = 'none';
+        btn.innerHTML = "📊 Bật Tiến Trình";
+        btn.style.backgroundColor = "#7f8c8d";
+    }
+}
+
+function togglePcPanel() {
+    const panel = document.getElementById('progress-panel');
+    const btn = document.getElementById('toggle-pc-panel');
+    panel.classList.toggle('collapsed');
+    if (panel.classList.contains('collapsed')) { btn.innerHTML = "◀"; } 
+    else { btn.innerHTML = "▶"; }
+}
+
+window.onclick = function(event) {
+    if (!event.target.matches('.dropbtn')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+            if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
+        }
+    }
+    let mobileMenu = document.getElementById('top-menu-container');
+    if (mobileMenu && mobileMenu.classList.contains('open') && !mobileMenu.contains(event.target)) {
+        mobileMenu.classList.remove('open');
+    }
+}
+
+function toggleCustomRange() {
+    const limitType = document.getElementById('setting-limit').value;
+    const customDiv = document.getElementById('custom-range-inputs');
+    if (limitType === 'custom') customDiv.style.display = 'flex';
+    else customDiv.style.display = 'none';
+}
+
+function toggleModuleSelect() {
+    const mod = document.getElementById('setting-module').value;
+    document.getElementById('custom-mix-container').style.display = (mod === 'custom_mix') ? 'flex' : 'none';
+}
+
+function openSettings() {
+    document.getElementById('start-banner').style.display = 'flex';
+    document.getElementById('start-btn-action').innerText = "TẠO ĐỀ MỚI & LÀM LẠI";
+    document.getElementById('close-banner-btn').style.display = 'inline-block';
+}
+
+function closeSettings() { document.getElementById('start-banner').style.display = 'none'; }
+
+function startApp() {
+    isShuffle = document.getElementById('setting-shuffle').value === 'yes';
+    examMode = document.getElementById('setting-answer').value;
+    questionsPerPage = (examMode === 'strict_20') ? 20 : 10;
+
+    let moduleCode = document.getElementById('setting-module').value;
+    let limit = document.getElementById('setting-limit').value;
+
+    document.getElementById('welcome-screen').style.display = 'none';
+    document.getElementById('name-screen').style.display = 'none';
+    document.getElementById('start-banner').style.display = 'none';
+    document.getElementById('main-content').style.display = 'block';
+
+    if (isProgressMasterEnabled && window.innerWidth <= 768) {
+        document.getElementById('mobile-progress-btn').style.display = 'flex';
+    }
+
+    if(examMode === 'no') {
+        document.getElementById('normal-pagination').style.display = 'flex';
+        document.getElementById('submit-test-btn').style.display = 'inline-block';
+        document.getElementById('strict-pagination').style.display = 'none';
+        document.getElementById('page-jump-container').style.display = 'block';
+        document.getElementById('mode-desc').innerHTML = `Xin chào <b>${userName}</b>! Chế độ Thi thử: Chọn đáp án xong bấm nộp bài để xem điểm.`;
+    } else if (examMode === 'strict_20') {
+        document.getElementById('normal-pagination').style.display = 'none';
+        document.getElementById('strict-pagination').style.display = 'flex';
+        document.getElementById('page-jump-container').style.display = 'none';
+        document.getElementById('mode-desc').innerHTML = `Xin chào <b>${userName}</b>!<br>🔥 Chế độ Vượt Ải: Phải bấm NỘP BÀI và sửa lại hết các câu Sai/Chưa làm cho đúng!`;
+    } else {
+        document.getElementById('normal-pagination').style.display = 'flex';
+        document.getElementById('submit-test-btn').style.display = 'none';
+        document.getElementById('strict-pagination').style.display = 'none';
+        document.getElementById('page-jump-container').style.display = 'block';
+        document.getElementById('mode-desc').innerHTML = `Xin chào <b>${userName}</b>! Chế độ Ôn tập: Chọn đáp án sẽ hiển thị Đúng/Sai ngay.`;
+    }
+
+    generateTest(moduleCode, limit);
+}
+
+function switchTab(moduleCode) {
+    document.getElementById('setting-module').value = moduleCode;
+    toggleModuleSelect();
+    let limit = document.getElementById('setting-limit').value;
+    generateTest(moduleCode, limit);
+}
+
+function shuffleArray(array) {
+    let shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+function generateTest(moduleCode, limit) {
+    userAnswers = {}; invalidAnswers = []; unansweredIds = []; strictCheckedBoxes = [];
+    currentPage = 1; isTestSubmitted = false;
+
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    if(document.getElementById(`btn-${moduleCode}`)) document.getElementById(`btn-${moduleCode}`).classList.add('active');
+
+    let sourceData = [];
+
+    if(moduleCode === 'all') {
+        displayModuleName = "Trộn Tất Cả Chuyên đề";
+        sourceData = [...(quizData.qp1||[]), ...(quizData.qp2||[]), ...(quizData.cd4||[]), ...(quizData.cd5||[]), ...(quizData.cd6||[]), ...(quizData.cd7||[]), ...(quizData.cd8||[]), ...(quizData.cd9||[])];
+    } else if(moduleCode === 'custom_mix') {
+        displayModuleName = "Trộn nhiều Chuyên đề Tùy chọn";
+        const checkboxes = document.querySelectorAll('#custom-mix-container input:checked');
+        checkboxes.forEach(cb => { sourceData = sourceData.concat(quizData[cb.value] || []); });
+        if(sourceData.length === 0) { alert("⚠️ Bạn chưa chọn chuyên đề nào!"); openSettings(); return; }
+    } else {
+        displayModuleName = moduleCode === 'qp2' ? "Học phần QP2" : `Học phần ${moduleCode.toUpperCase()}`;
+        sourceData = quizData[moduleCode] ? [...quizData[moduleCode]] : [];
+    }
+
+    if(limit === 'custom') {
+        let start = parseInt(document.getElementById('custom-start').value) || 1;
+        let end = parseInt(document.getElementById('custom-end').value) || 999;
+        if (start > end) { let temp = start; start = end; end = temp; }
+        sourceData = sourceData.slice(start - 1, end); 
+    }
+
+    if(isShuffle) sourceData = shuffleArray(sourceData);
+
+    currentQuestions = (limit !== 'all' && limit !== 'custom') ? sourceData.slice(0, parseInt(limit)) : sourceData;
+
+    if(currentQuestions.length === 0) {
+        document.getElementById('quiz-area').innerHTML = "<h3 style='text-align:center; color:#7f8c8d; padding: 40px;'>Chưa có câu hỏi nào! Hãy dán dữ liệu câu hỏi vào phần quizData nhé.</h3>";
+        document.getElementById('global-stats').innerText = `Học phần: ${displayModuleName} | Đã làm: 0/0`;
+        return;
+    }
+
+    totalPages = Math.ceil(currentQuestions.length / questionsPerPage);
+    const select = document.getElementById('page-select');
+    select.innerHTML = '';
+    for (let i = 1; i <= totalPages; i++) {
+        let opt = document.createElement('option'); opt.value = i; opt.innerHTML = `Trang ${i}`; select.appendChild(opt);
+    }
+    
+    updateStats();
+    renderQuiz();
+}
+
+function renderQuiz() {
+    if(currentQuestions.length === 0) return;
+    const quizArea = document.getElementById('quiz-area');
+    let htmlContent = ""; 
+    
+    const start = (currentPage - 1) * questionsPerPage;
+    const end = Math.min(start + questionsPerPage, currentQuestions.length);
+
+    if (examMode === 'strict_20') {
+        htmlContent += `<h3 style='color:#e67e22; text-align:center;'>ẢI THỨ ${currentPage} / ${totalPages} (Từ câu ${start+1} đến ${end})</h3>`;
+    }
+
+    for (let i = start; i < end; i++) {
+        const item = currentQuestions[i];
+        let answersHtml = "";
+        
+        for (let key in item.a) {
+            let isChecked = userAnswers[i] === key ? "checked" : "";
+            let classResult = "";
+            let disableInput = "";
+
+            if (userAnswers[i]) {
+                if (examMode === 'yes' || isTestSubmitted) {
+                    if (key === item.true) classResult = "correct";
+                    else if (userAnswers[i] === key) classResult = "wrong";
+                    disableInput = "disabled";
+                } else if (examMode === 'strict_20') {
+                    if (strictCheckedBoxes.includes(i)) {
+                        if (userAnswers[i] === key) classResult = "correct";
+                        disableInput = "disabled";
+                    } else {
+                        if (userAnswers[i] === key) {
+                            if (invalidAnswers.includes(i)) classResult = "wrong-highlight";
+                            else classResult = "selected"; 
+                        }
+                    }
+                } else if (examMode === 'no') {
+                    if (userAnswers[i] === key) classResult = "selected";
+                }
+            }
+            
+            answersHtml += `
+            <label class="answer-label ${classResult} ${disableInput}" id="lbl-${i}-${key}">
+                <input type="radio" name="q${i}" value="${key}" ${isChecked} onclick="handleAnswer(${i}, '${key}')" style="margin-right:8px;">
+                <b>${key}.</b> ${item.a[key]}
+            </label>`;
+        }
+
+        let boxClasses = ["question-box"];
+        let statusTag = "";
+        if(examMode === 'strict_20') {
+            if(strictCheckedBoxes.includes(i)) {
+                boxClasses.push("box-correct");
+                statusTag = `<span style="color:#27ae60; font-size: 14px; float:right;">✔ Đã khóa đúng</span>`;
+            } else if(invalidAnswers.includes(i)) {
+                boxClasses.push("box-wrong");
+                statusTag = `<span style="color:#e74c3c; font-size: 14px; float:right;">✘ Làm sai</span>`;
+            } else if(unansweredIds.includes(i)) {
+                boxClasses.push("box-unanswered");
+                statusTag = `<span style="color:#e74c3c; font-size: 14px; float:right;">⚠ Chưa làm</span>`;
+            }
+        }
+        
+        htmlContent += `
+        <div class="${boxClasses.join(' ')}" id="box-${i}">
+            <div class="question-title">Câu ${i + 1} <span style="font-size:13px; font-weight:normal; color:#888;">(Gốc: Câu ${item.id})</span>: ${item.q} ${statusTag}</div>
+            <div>${answersHtml}</div>
+            <button class="hint-btn" onclick="toggleAnswer(${i})">💡 Xem đáp án</button>
+            <div class="answer-reveal" id="reveal-${i}">👉 Đáp án đúng: <b>${item.true}</b>. ${item.a[item.true]}</div>
+        </div>`;
+    }
+    
+    quizArea.innerHTML = htmlContent;
+    if (examMode !== 'strict_20') updateNavigation();
+    renderProgressPanel();
+}
+
+function toggleAnswer(qIndex) {
+    const revealDiv = document.getElementById(`reveal-${qIndex}`);
+    if (revealDiv.style.display === 'block') { revealDiv.style.display = 'none'; } 
+    else { revealDiv.style.display = 'block'; }
+}
+
+function handleAnswer(qIndex, selectedKey) {
+    userAnswers[qIndex] = selectedKey;
+    
+    if(examMode === 'no' || examMode === 'strict_20') {
+        if(examMode === 'strict_20') {
+            if (invalidAnswers.includes(qIndex)) invalidAnswers = invalidAnswers.filter(id => id !== qIndex);
+            if (unansweredIds.includes(qIndex)) unansweredIds = unansweredIds.filter(id => id !== qIndex);
+            
+            let box = document.getElementById(`box-${qIndex}`);
+            if(box) {
+                box.classList.remove('box-wrong', 'box-unanswered');
+                let statusBadge = box.querySelector('span[style*="float:right"]');
+                if(statusBadge) statusBadge.remove(); 
+            }
+        } 
+        
+        const allLabels = document.querySelectorAll(`#box-${qIndex} .answer-label`);
+        allLabels.forEach(lbl => lbl.classList.remove('selected', 'wrong-highlight'));
+        let selLabel = document.getElementById(`lbl-${qIndex}-${selectedKey}`);
+        if(selLabel) selLabel.classList.add('selected');
+        
+        updateStats();
+        renderProgressPanel();
+        return;
+    }
+
+    const item = currentQuestions[qIndex];
+    const allLabels = document.querySelectorAll(`#box-${qIndex} .answer-label`);
+    allLabels.forEach(lbl => lbl.classList.add('disabled'));
+
+    const selectedLabel = document.getElementById(`lbl-${qIndex}-${selectedKey}`);
+    const correctLabel = document.getElementById(`lbl-${qIndex}-${item.true}`);
+
+    if (selectedKey === item.true) { 
+        if(selectedLabel) selectedLabel.classList.add('correct'); 
+    } else {
+        if(selectedLabel) selectedLabel.classList.add('wrong');
+        if(correctLabel) correctLabel.classList.add('correct');
+    }
+    updateStats();
+    renderProgressPanel();
+}
+
+function renderProgressPanel() {
+    const grid = document.getElementById('progress-grid');
+    if(!grid) return;
+    grid.innerHTML = '';
+    
+    for(let i = 0; i < currentQuestions.length; i++) {
+        let cls = 'prog-box';
+        if(examMode === 'strict_20') {
+            if(strictCheckedBoxes.includes(i)) cls += ' prog-correct';
+            else if(invalidAnswers.includes(i)) cls += ' prog-wrong';
+            else if(userAnswers[i]) cls += ' prog-selected';
+        } else if(examMode === 'yes' || isTestSubmitted) {
+            if(userAnswers[i] === currentQuestions[i].true) cls += ' prog-correct';
+            else if(userAnswers[i]) cls += ' prog-wrong';
+        } else {
+            if(userAnswers[i]) cls += ' prog-selected';
+        }
+        grid.innerHTML += `<div class="${cls}" onclick="scrollToQuestion(${i})" title="Đến câu ${i+1}">${i+1}</div>`;
+    }
+}
+
+function scrollToQuestion(qIndex) {
+    let targetPage = Math.floor(qIndex / questionsPerPage) + 1;
+    if (currentPage !== targetPage) { goToPage(targetPage, false); }
+    if(window.innerWidth <= 768) { document.getElementById('progress-panel').classList.remove('open'); }
+    
+    setTimeout(() => {
+        const box = document.getElementById(`box-${qIndex}`);
+        if (box) {
+            box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            box.style.transform = "scale(1.03)";
+            box.style.boxShadow = "0 0 20px rgba(52, 152, 219, 0.4)";
+            setTimeout(() => {
+                box.style.transform = "scale(1)";
+                box.style.boxShadow = "0 10px 30px rgba(0,0,0,0.1)"; 
+            }, 1200);
+        }
+    }, 100); 
+}
+
+function checkStrictSubmit() {
+    const start = (currentPage - 1) * questionsPerPage;
+    const end = Math.min(start + questionsPerPage, currentQuestions.length);
+    let totalCurrent = end - start;
+
+    invalidAnswers = []; unansweredIds = [];
+    
+    for (let i = start; i < end; i++) {
+        if(strictCheckedBoxes.includes(i)) continue;
+
+        if (userAnswers[i]) {
+            if (userAnswers[i] === currentQuestions[i].true) strictCheckedBoxes.push(i); 
+            else invalidAnswers.push(i); 
+        } else unansweredIds.push(i); 
+    }
+
+    if (strictCheckedBoxes.length === totalCurrent) {
+        if (currentPage === totalPages) {
+            isTestSubmitted = true;
+            document.getElementById('score-text').innerText = "10.0 Điểm";
+            document.getElementById('score-text').style.color = "#27ae60";
+            document.getElementById('detail-text').innerText = `Tuyệt đỉnh ${userName}! Bạn đã vượt qua TẤT CẢ ${currentQuestions.length} câu hỏi.`;
+            document.getElementById('result-modal').style.display = 'flex';
+        } else {
+            showStageAlert("🎉 VƯỢT ẢI THÀNH CÔNG!", `Xuất sắc ${userName}! Bạn đã trả lời đúng toàn bộ ${totalCurrent} câu.\nHệ thống sẽ mở khóa ải tiếp theo!`, true);
+        }
+    } else {
+        let msg = `Bạn hiện có:\n`;
+        if(unansweredIds.length > 0) msg += `- ${unansweredIds.length} câu CHƯA LÀM\n`;
+        if(invalidAnswers.length > 0) msg += `- ${invalidAnswers.length} câu LÀM SAI\n`;
+        msg += `\nHệ thống đã bôi đỏ các câu lỗi và khóa xanh các câu đúng.\nHãy làm tiếp và sửa các câu lỗi, sau đó nộp lại lần nữa nhé!`;
+        showStageAlert("❌ CHƯA THỂ QUA ẢI", msg);
+        renderQuiz(); 
+    }
+}
+
+function showStageAlert(title, msg, isSuccess = false) {
+    document.getElementById('stage-alert-title').innerText = title;
+    document.getElementById('stage-alert-title').style.color = isSuccess ? "#27ae60" : "#e74c3c";
+    document.getElementById('stage-alert-msg').innerText = msg;
+    
+    let btn = document.getElementById('stage-alert-btn');
+    if (isSuccess) {
+        btn.innerText = "SANG ẢI TIẾP THEO";
+        btn.onclick = function() {
+            document.getElementById('stage-alert-modal').style.display = 'none';
+            currentPage++;
+            invalidAnswers = []; unansweredIds = []; strictCheckedBoxes = [];
+            renderQuiz();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+    } else {
+        btn.innerText = "ĐI SỬA LẠI";
+        btn.onclick = function() { document.getElementById('stage-alert-modal').style.display = 'none'; };
+    }
+    document.getElementById('stage-alert-modal').style.display = 'flex';
+}
+
+function closeStageAlert() { document.getElementById('stage-alert-modal').style.display = 'none'; }
+function openConfirmModal() { document.getElementById('confirm-modal').style.display = 'flex'; }
+function closeConfirmModal() { document.getElementById('confirm-modal').style.display = 'none'; }
+
+function processSubmit() {
+    document.getElementById('confirm-modal').style.display = 'none';
+    isTestSubmitted = true;
+    renderQuiz();
+    updateStats();
+    
+    let correct = 0;
+    for (let idx in userAnswers) {
+        if (userAnswers[idx] === currentQuestions[idx].true) correct++;
+    }
+    let point = (correct / currentQuestions.length * 10).toFixed(1);
+    let wrongCount = currentQuestions.length - correct;
+    
+    document.getElementById('score-text').innerText = point + " Điểm";
+    document.getElementById('score-text').style.color = point >= 5 ? "#27ae60" : "#e74c3c";
+    document.getElementById('detail-text').innerText = `Sinh viên: ${userName} | Trả lời đúng: ${correct} / ${currentQuestions.length} câu`;
+    
+    // Ẩn/Hiện nút làm lại câu sai
+    let retryBtn = document.getElementById('retry-wrong-btn');
+    if(retryBtn) {
+        if(wrongCount > 0) {
+            retryBtn.style.display = 'block';
+            retryBtn.innerText = `LÀM LẠI ${wrongCount} CÂU SAI`;
+        } else {
+            retryBtn.style.display = 'none'; 
+        }
+    }
+
+    document.getElementById('result-modal').style.display = 'flex';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Chức năng Lọc các câu sai / chưa làm tạo thành đề mới
+function retryWrongQuestions() {
+    let wrongQuestions = currentQuestions.filter((q, index) => {
+        return userAnswers[index] !== q.true;
+    });
+
+    if (wrongQuestions.length > 0) {
+        currentQuestions = wrongQuestions;
+        userAnswers = {}; invalidAnswers = []; unansweredIds = []; strictCheckedBoxes = [];
+        isTestSubmitted = false; currentPage = 1;
+
+        totalPages = Math.ceil(currentQuestions.length / questionsPerPage);
+        const select = document.getElementById('page-select');
+        select.innerHTML = '';
+        for (let i = 1; i <= totalPages; i++) {
+            let opt = document.createElement('option'); opt.value = i; opt.innerHTML = `Trang ${i}`; select.appendChild(opt);
+        }
+
+        document.getElementById('mode-desc').innerHTML = `<span style="color:#e74c3c; font-weight:bold;">🔥 Chế độ Khắc phục lỗi:</span> Đang làm lại <b>${currentQuestions.length}</b> câu sai / chưa làm. Cố gắng lên ${userName}!`;
+        document.getElementById('result-modal').style.display = 'none';
+        
+        updateStats(); renderQuiz();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+}
+
+function closeResult() { document.getElementById('result-modal').style.display = 'none'; }
+function openSettingsFromResult() { document.getElementById('result-modal').style.display = 'none'; openSettings(); }
+
+function updateStats() {
+    let answered = Object.keys(userAnswers).length;
+    let correct = 0;
+    if (examMode === 'yes' || isTestSubmitted) {
+        for (let idx in userAnswers) if (userAnswers[idx] === currentQuestions[idx].true) correct++;
+        document.getElementById('global-stats').innerText = `Học phần: ${displayModuleName} | Đã làm: ${answered}/${currentQuestions.length} | Đúng: ${correct}`;
+    } else if (examMode === 'strict_20') {
+        const start = (currentPage - 1) * questionsPerPage;
+        const end = Math.min(start + questionsPerPage, currentQuestions.length);
+        let stageAns = 0;
+        for (let i = start; i < end; i++) if (userAnswers[i]) stageAns++;
+        document.getElementById('global-stats').innerText = `Sinh viên: ${userName} | Tiến độ ải này: ${stageAns}/${end - start}`;
+    } else {
+        document.getElementById('global-stats').innerText = `Sinh viên: ${userName} | Đã làm: ${answered}/${currentQuestions.length}`;
+    }
+}
+
+function changePage(delta) { goToPage(currentPage + delta); }
+function goToPageSelect(page) { goToPage(page); }
+
+function goToPage(page, scrollToTop = true) { 
+    currentPage = parseInt(page); 
+    renderQuiz(); 
+    if(window.innerWidth <= 768) { document.getElementById('progress-panel').classList.remove('open'); }
+    if (scrollToTop) { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+}
+
+function updateNavigation() {
+    document.getElementById('page-info').innerText = `Trang ${currentPage} / ${totalPages}`;
+    document.getElementById('prev-btn').disabled = currentPage === 1;
+    document.getElementById('next-btn').disabled = currentPage === totalPages;
+    document.getElementById('page-select').value = currentPage;
+}
+
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+function toggleDarkMode(event) {
+    document.body.classList.toggle('dark-mode');
+    const btn = document.getElementById('dark-mode-btn');
+    if (document.body.classList.contains('dark-mode')) {
+        btn.innerHTML = "☀️ Nền sáng";
+        btn.style.backgroundColor = "#f1c40f"; 
+        btn.style.color = "#333";
+    } else {
+        btn.innerHTML = "🌙 Nền tối";
+        btn.style.backgroundColor = "#2c3e50"; 
+        btn.style.color = "#fff";
+    }
+}
+</script>
+</body>
+</html>
